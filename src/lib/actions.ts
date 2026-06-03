@@ -1,5 +1,5 @@
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
-import { open } from '@tauri-apps/plugin-shell';
+import { openUrl, openPath as tauriOpenPath } from '@tauri-apps/plugin-opener';
 
 export async function copyToClipboard(text: string) {
   try {
@@ -11,7 +11,11 @@ export async function copyToClipboard(text: string) {
 
 export async function openPath(path: string) {
   try {
-    await open(path);
+    if (path.startsWith('http')) {
+      await openUrl(path);
+    } else {
+      await tauriOpenPath(path);
+    }
   } catch (err) {
     console.error('Failed to open path:', err);
   }
@@ -19,11 +23,23 @@ export async function openPath(path: string) {
 
 export async function revealInExplorer(path: string) {
   try {
-    // In many Tauri configurations, shell.open for a directory path opens it in the file explorer.
-    // If it's a file path, we can't easily "select" it without OS-specific commands.
-    // For now, we'll open it. If it's a folder, it opens explorer.
-    // If it's a file, it might open the file or we can try to open its parent.
-    await open(path);
+    if (path.startsWith('http')) {
+      await openUrl(path);
+      return;
+    }
+
+    // "Open in Explorer" should ideally open the containing folder for files.
+    const isFile = /\.[a-z0-9]+$/i.test(path);
+    if (isFile) {
+      const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+      if (lastSlash !== -1) {
+        const dir = path.substring(0, lastSlash);
+        await tauriOpenPath(dir);
+        return;
+      }
+    }
+
+    await tauriOpenPath(path);
   } catch (err) {
     console.error('Failed to reveal in explorer:', err);
   }
