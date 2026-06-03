@@ -9,6 +9,7 @@
     "shell:default",
     "fs:default",
     "clipboard-manager:default",
-    "store:default"
+    "store:default",
+    "dialog:default"
   ]
 }

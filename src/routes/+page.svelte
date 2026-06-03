@@ -5,7 +5,7 @@
   import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, ChevronUp, ChevronDown } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -103,17 +103,37 @@
   </div>
 
   {#if showSettings}
-    <div class="p-3 border rounded bg-muted/20 flex gap-4 items-center animate-in fade-in slide-in-from-top-1">
-      <span class="text-xs font-medium">テーマ設定:</span>
-      {#each themes as t}
-        <button
-          class="flex items-center gap-1.5 px-2 py-1 rounded border text-xs transition-colors {$settingsStore.theme === t.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}"
-          onclick={() => settingsStore.setTheme(t.value)}
-        >
-          <div class="w-3 h-3 rounded-full {t.color}"></div>
-          {t.name}
-        </button>
-      {/each}
+    <div class="p-3 border rounded bg-muted/20 flex flex-wrap gap-6 items-center animate-in fade-in slide-in-from-top-1">
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium">テーマ設定:</span>
+        <div class="flex gap-2">
+          {#each themes as t}
+            <button
+              class="flex items-center gap-1.5 px-2 py-1 rounded border text-xs transition-colors {$settingsStore.theme === t.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}"
+              onclick={() => settingsStore.setTheme(t.value)}
+            >
+              <div class="w-3 h-3 rounded-full {t.color}"></div>
+              {t.name}
+            </button>
+          {/each}
+        </div>
+      </div>
+
+      <div class="w-px h-6 bg-border"></div>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium">データ管理:</span>
+        <div class="flex gap-2">
+          <Button variant="outline" size="sm" class="h-7 text-[10px]" onclick={() => linkStore.exportToCSV()}>
+            <Download class="w-3 h-3 mr-1" />
+            CSVエクスポート
+          </Button>
+          <Button variant="outline" size="sm" class="h-7 text-[10px]" onclick={() => linkStore.importFromCSV()}>
+            <Upload class="w-3 h-3 mr-1" />
+            CSVインポート
+          </Button>
+        </div>
+      </div>
     </div>
   {/if}
 
