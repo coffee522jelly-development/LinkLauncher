@@ -1,0 +1,27 @@
+
+> tauri-app@0.1.0 dev
+> vite dev --port 1420
+
+5:22:45 PM [vite] (client) Forced re-optimization of dependencies
+
+  VITE v6.4.3  ready in 1114 ms
+
+  ➜  Local:   http://localhost:1420/
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+7:39:15 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+7:39:15 AM [vite] (client) page reload .svelte-kit/generated/root.js
+7:39:15 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+7:39:17 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+7:39:17 AM [vite] (client) page reload .svelte-kit/generated/root.js
+7:39:17 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+7:39:51 AM [vite] (client) page reload build/index.html
+7:39:52 AM [vite] (client) page reload build/index.html
