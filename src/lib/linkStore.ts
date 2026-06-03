@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { LazyStore } from '@tauri-apps/plugin-store';
+import { load } from '@tauri-apps/plugin-store';
 
 export interface Link {
   id: string;
@@ -8,7 +8,6 @@ export interface Link {
 }
 
 const STORE_PATH = 'links.json';
-const store = new LazyStore(STORE_PATH);
 
 function createLinkStore() {
   const { subscribe, set, update } = writable<Link[]>([]);
@@ -16,6 +15,7 @@ function createLinkStore() {
   return {
     subscribe,
     load: async () => {
+      const store = await load(STORE_PATH);
       const savedLinks = await store.get<Link[]>('links');
       if (savedLinks) {
         set(savedLinks);
@@ -27,6 +27,7 @@ function createLinkStore() {
         name,
         path,
       };
+      const store = await load(STORE_PATH);
       update((links) => {
         const updated = [...links, newLink];
         store.set('links', updated).then(() => store.save());
@@ -34,6 +35,7 @@ function createLinkStore() {
       });
     },
     remove: async (id: string) => {
+      const store = await load(STORE_PATH);
       update((links) => {
         const updated = links.filter((link) => link.id !== id);
         store.set('links', updated).then(() => store.save());

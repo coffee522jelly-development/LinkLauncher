@@ -34,91 +34,84 @@
   }
 
   function getAppButtonLabel(path: string) {
-    if (isUrl(path)) return 'ブラウザで開く';
-    if (path.toLowerCase().endsWith('.xlsx')) return 'Excelで開く';
-    return 'アプリで開く';
+    if (isUrl(path)) return 'ブラウザ';
+    if (path.toLowerCase().endsWith('.xlsx')) return 'Excel';
+    return '開く';
   }
 </script>
 
-<main class="container mx-auto p-4 max-w-4xl">
-  <h1 class="text-2xl font-bold mb-6 text-center">リンクランチャー</h1>
-
-  <!-- Registration Form -->
-  <div class="bg-card border rounded-lg p-4 mb-8 shadow-sm">
-    <h2 class="text-lg font-semibold mb-4">新規登録</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-      <div>
-        <label for="name" class="block text-sm font-medium mb-1">名称</label>
-        <Input id="name" bind:value={newName} placeholder="例: 業務マニュアル" />
-      </div>
-      <div>
-        <label for="path" class="block text-sm font-medium mb-1">URL または ファイルパス</label>
-        <Input id="path" bind:value={newPath} placeholder="https://... または C:\..." />
+<main class="p-4 flex flex-col gap-4 h-screen max-w-full">
+  <!-- Search and Add Compact Header -->
+  <div class="flex gap-2 items-end">
+    <div class="flex-1 space-y-1">
+      <label for="name" class="text-xs text-muted-foreground ml-1">名称</label>
+      <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-sm" />
+    </div>
+    <div class="flex-[2] space-y-1">
+      <label for="path" class="text-xs text-muted-foreground ml-1">URL / パス</label>
+      <Input id="path" bind:value={newPath} placeholder="URL または ファイルパス" class="h-8 text-sm" />
+    </div>
+    <Button onclick={addLink} size="sm" class="h-8">
+      <Plus class="w-4 h-4 mr-1" />
+      追加
+    </Button>
+    <div class="w-px h-8 bg-border mx-1"></div>
+    <div class="flex-1 relative space-y-1">
+      <label for="search" class="text-xs text-muted-foreground ml-1">検索</label>
+      <div class="relative">
+        <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+        <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-sm" />
       </div>
     </div>
-    <Button onclick={addLink} class="w-full md:w-auto">
-      <Plus class="w-4 h-4 mr-2" />
-      登録
-    </Button>
   </div>
 
-  <!-- Search and List -->
-  <div class="space-y-4">
-    <div class="relative">
-      <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-      <Input
-        bind:value={searchQuery}
-        placeholder="名称で検索..."
-        class="pl-10"
-      />
-    </div>
-
-    <div class="border rounded-lg overflow-hidden bg-card">
-      <table class="w-full text-sm text-left">
-        <thead class="bg-muted text-muted-foreground font-medium border-b">
+  <!-- Table View -->
+  <div class="flex-1 border rounded bg-card overflow-hidden flex flex-col">
+    <div class="overflow-auto flex-1">
+      <table class="w-full text-xs text-left border-collapse">
+        <thead class="bg-muted text-muted-foreground sticky top-0 z-10">
           <tr>
-            <th class="px-4 py-3">名称</th>
-            <th class="px-4 py-3">パス</th>
-            <th class="px-4 py-3 text-right">アクション</th>
+            <th class="px-3 py-2 border-b w-1/4">名称</th>
+            <th class="px-3 py-2 border-b">パス</th>
+            <th class="px-3 py-2 border-b text-right w-40">アクション</th>
           </tr>
         </thead>
         <tbody class="divide-y">
           {#each filteredLinks as link (link.id)}
-            <tr class="hover:bg-muted/50 transition-colors">
-              <td class="px-4 py-3 font-medium">{link.name}</td>
-              <td class="px-4 py-3 text-muted-foreground truncate max-w-[200px]" title={link.path}>
+            <tr class="hover:bg-muted/30 transition-colors">
+              <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
+              <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
                 {link.path}
               </td>
-              <td class="px-4 py-3 text-right space-x-1 whitespace-nowrap">
-                <Button variant="outline" size="icon" onclick={() => copyToClipboard(link.path)} title="パスをコピー">
-                  <Copy class="w-4 h-4" />
+              <td class="px-3 py-1.5 text-right space-x-1 whitespace-nowrap">
+                <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
+                  <Copy class="w-3.5 h-3.5" />
                 </Button>
 
                 {#if !isUrl(link.path)}
-                  <Button variant="outline" size="icon" onclick={() => revealInExplorer(link.path)} title="エクスプローラーで開く">
-                    <FolderOpen class="w-4 h-4" />
+                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                    <FolderOpen class="w-3.5 h-3.5" />
                   </Button>
                 {/if}
 
-                <Button variant="outline" onclick={() => openPath(link.path)} title={getAppButtonLabel(link.path)}>
+                <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
                   {#if isUrl(link.path)}
-                    <ExternalLink class="w-4 h-4 mr-1" />
-                    開く
+                    <ExternalLink class="w-3 h-3 mr-1" />
                   {:else}
-                    <Play class="w-4 h-4 mr-1" />
-                    開く
+                    <Play class="w-3 h-3 mr-1" />
                   {/if}
+                  {getAppButtonLabel(link.path)}
                 </Button>
 
-                <Button variant="ghost" size="icon" onclick={() => linkStore.remove(link.id)} class="text-destructive hover:text-destructive hover:bg-destructive/10">
-                  <Trash2 class="w-4 h-4" />
+                <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
+                  <Trash2 class="w-3.5 h-3.5" />
                 </Button>
               </td>
             </tr>
           {:else}
             <tr>
-              <td colspan="3" class="px-4 py-8 text-center text-muted-foreground">
-                登録されているリンクはありません
+              <td colspan="3" class="px-3 py-10 text-center text-muted-foreground">
+                リンクがありません
               </td>
             </tr>
           {/each}
@@ -132,6 +125,7 @@
   :global(body) {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    overflow: hidden;
   }
   :global(:root) {
     --background: 0 0% 100%;
@@ -139,6 +133,7 @@
     --card: 0 0% 100%;
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
+    --border: 240 5.9% 90%;
   }
   @media (prefers-color-scheme: dark) {
     :global(:root) {
@@ -147,6 +142,7 @@
       --card: 240 10% 3.9%;
       --muted: 240 3.7% 15.9%;
       --muted-foreground: 240 5% 64.9%;
+      --border: 240 3.7% 15.9%;
     }
   }
 </style>
