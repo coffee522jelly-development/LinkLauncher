@@ -39,6 +39,9 @@
         "languages": [
           "Japanese"
         ]
+      },
+      "msi": {
+        "language": "ja-JP"
       }
     }
   }

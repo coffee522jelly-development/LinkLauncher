@@ -1,31 +1,54 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { linkStore } from '$lib/linkStore';
+  import { settingsStore, type Theme } from '$lib/settingsStore';
   import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, ChevronUp, ChevronDown } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
+  let newCategory = $state('');
   let searchQuery = $state('');
+  let sortKey = $state<'name' | 'category'>('name');
+  let sortOrder = $state<'asc' | 'desc'>('asc');
+  let showSettings = $state(false);
 
   onMount(() => {
     linkStore.load();
+    settingsStore.load();
   });
 
   const filteredLinks = $derived(
     $linkStore.filter((link) =>
       link.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      link.path.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+      link.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      link.category.toLowerCase().includes(searchQuery.toLowerCase())
+    ).sort((a, b) => {
+      const valA = a[sortKey].toLowerCase();
+      const valB = b[sortKey].toLowerCase();
+      if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+      if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    })
   );
 
   async function addLink() {
     if (newName && newPath) {
-      await linkStore.add(newName, newPath);
+      await linkStore.add(newName, newPath, newCategory);
       newName = '';
       newPath = '';
+      newCategory = '';
+    }
+  }
+
+  function toggleSort(key: 'name' | 'category') {
+    if (sortKey === key) {
+      sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortKey = key;
+      sortOrder = 'asc';
     }
   }
 
@@ -38,18 +61,29 @@
     if (path.toLowerCase().endsWith('.xlsx')) return 'Excel';
     return '開く';
   }
+
+  const themes: { name: string, value: Theme, color: string }[] = [
+    { name: 'Zinc', value: 'zinc', color: 'bg-zinc-500' },
+    { name: 'Blue', value: 'blue', color: 'bg-blue-500' },
+    { name: 'Rose', value: 'rose', color: 'bg-rose-500' },
+    { name: 'Green', value: 'green', color: 'bg-green-500' },
+  ];
 </script>
 
 <main class="p-4 flex flex-col gap-4 h-screen max-w-full">
-  <!-- Search and Add Compact Header -->
+  <!-- Header -->
   <div class="flex gap-2 items-end">
-    <div class="flex-1 space-y-1">
+    <div class="flex-[1.5] space-y-1">
       <label for="name" class="text-xs text-muted-foreground ml-1">名称</label>
       <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-sm" />
     </div>
     <div class="flex-[2] space-y-1">
       <label for="path" class="text-xs text-muted-foreground ml-1">URL / パス</label>
-      <Input id="path" bind:value={newPath} placeholder="URL または ファイルパス" class="h-8 text-sm" />
+      <Input id="path" bind:value={newPath} placeholder="URL または パス" class="h-8 text-sm" />
+    </div>
+    <div class="flex-1 space-y-1">
+      <label for="category" class="text-xs text-muted-foreground ml-1">カテゴリー</label>
+      <Input id="category" bind:value={newCategory} placeholder="任意" class="h-8 text-sm" />
     </div>
     <Button onclick={addLink} size="sm" class="h-8">
       <Plus class="w-4 h-4 mr-1" />
@@ -63,7 +97,25 @@
         <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-sm" />
       </div>
     </div>
+    <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => showSettings = !showSettings}>
+      <Settings class="w-4 h-4" />
+    </Button>
   </div>
+
+  {#if showSettings}
+    <div class="p-3 border rounded bg-muted/20 flex gap-4 items-center animate-in fade-in slide-in-from-top-1">
+      <span class="text-xs font-medium">テーマ設定:</span>
+      {#each themes as t}
+        <button
+          class="flex items-center gap-1.5 px-2 py-1 rounded border text-xs transition-colors {$settingsStore.theme === t.value ? 'bg-primary text-primary-foreground border-primary' : 'bg-background hover:bg-muted'}"
+          onclick={() => settingsStore.setTheme(t.value)}
+        >
+          <div class="w-3 h-3 rounded-full {t.color}"></div>
+          {t.name}
+        </button>
+      {/each}
+    </div>
+  {/if}
 
   <!-- Table View -->
   <div class="flex-1 border rounded bg-card overflow-hidden flex flex-col">
@@ -71,7 +123,22 @@
       <table class="w-full text-xs text-left border-collapse">
         <thead class="bg-muted text-muted-foreground sticky top-0 z-10">
           <tr>
-            <th class="px-3 py-2 border-b w-1/4">名称</th>
+            <th class="px-3 py-2 border-b w-1/4 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('name')}>
+              <div class="flex items-center gap-1">
+                名称
+                {#if sortKey === 'name'}
+                  {sortOrder === 'asc' ? '▲' : '▼'}
+                {/if}
+              </div>
+            </th>
+            <th class="px-3 py-2 border-b w-1/6 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('category')}>
+              <div class="flex items-center gap-1">
+                カテゴリー
+                {#if sortKey === 'category'}
+                  {sortOrder === 'asc' ? '▲' : '▼'}
+                {/if}
+              </div>
+            </th>
             <th class="px-3 py-2 border-b">パス</th>
             <th class="px-3 py-2 border-b text-right w-40">アクション</th>
           </tr>
@@ -80,6 +147,11 @@
           {#each filteredLinks as link (link.id)}
             <tr class="hover:bg-muted/30 transition-colors">
               <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
+              <td class="px-3 py-1.5 truncate">
+                <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
+                  {link.category}
+                </span>
+              </td>
               <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
                 {link.path}
               </td>
@@ -110,7 +182,7 @@
             </tr>
           {:else}
             <tr>
-              <td colspan="3" class="px-3 py-10 text-center text-muted-foreground">
+              <td colspan="4" class="px-3 py-10 text-center text-muted-foreground">
                 リンクがありません
               </td>
             </tr>
@@ -126,23 +198,5 @@
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     overflow: hidden;
-  }
-  :global(:root) {
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --border: 240 5.9% 90%;
-  }
-  @media (prefers-color-scheme: dark) {
-    :global(:root) {
-      --background: 240 10% 3.9%;
-      --foreground: 0 0% 98%;
-      --card: 240 10% 3.9%;
-      --muted: 240 3.7% 15.9%;
-      --muted-foreground: 240 5% 64.9%;
-      --border: 240 3.7% 15.9%;
-    }
   }
 </style>
