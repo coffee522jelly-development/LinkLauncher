@@ -1,11 +1,29 @@
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { openUrl, openPath as tauriOpenPath } from '@tauri-apps/plugin-opener';
+import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
+
+async function notify(title: string, body: string) {
+  try {
+    let permission = await isPermissionGranted();
+    if (!permission) {
+      const permissionStatus = await requestPermission();
+      permission = permissionStatus === 'granted';
+    }
+    if (permission) {
+      sendNotification({ title, body });
+    }
+  } catch (err) {
+    console.error('Notification error:', err);
+  }
+}
 
 export async function copyToClipboard(text: string) {
   try {
     await writeText(text);
+    await notify('コピー成功', 'パスをクリップボードにコピーしました。');
   } catch (err) {
     console.error('Failed to copy to clipboard:', err);
+    await notify('エラー', 'コピーに失敗しました。権限を確認してください。');
   }
 }
 
@@ -18,6 +36,7 @@ export async function openPath(path: string) {
     }
   } catch (err) {
     console.error('Failed to open path:', err);
+    await notify('エラー', `パスを開けませんでした: ${err}`);
   }
 }
 
@@ -28,7 +47,6 @@ export async function revealInExplorer(path: string) {
       return;
     }
 
-    // "Open in Explorer" should ideally open the containing folder for files.
     const isFile = /\.[a-z0-9]+$/i.test(path);
     if (isFile) {
       const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
@@ -42,5 +60,6 @@ export async function revealInExplorer(path: string) {
     await tauriOpenPath(path);
   } catch (err) {
     console.error('Failed to reveal in explorer:', err);
+    await notify('エラー', `フォルダを開けませんでした: ${err}`);
   }
 }

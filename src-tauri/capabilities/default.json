@@ -5,11 +5,18 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:default",
+    "opener:allow-open-url",
+    "opener:allow-open-path",
+    "opener:allow-reveal-url",
+    "opener:allow-reveal-path",
     "shell:default",
-    "fs:default",
-    "clipboard-manager:default",
+    "fs:allow-read-text-file",
+    "fs:allow-write-text-file",
+    "fs:allow-exists",
+    "clipboard-manager:allow-write-text",
+    "clipboard-manager:allow-read-text",
     "store:default",
-    "dialog:default"
+    "dialog:default",
+    "notification:default"
   ]
 }
