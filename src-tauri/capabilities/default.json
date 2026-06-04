@@ -6,18 +6,36 @@
   "permissions": [
     "core:default",
     "opener:allow-open-url",
-    "opener:allow-open-path",
-    "opener:allow-reveal-item-in-dir",
     "shell:default",
-    "fs:allow-read-text-file",
-    "fs:allow-write-text-file",
-    "fs:allow-exists",
-    "fs:allow-stat",
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-text",
     "store:default",
     "dialog:allow-save",
     "dialog:allow-open",
-    "notification:default"
+    "notification:default",
+    {
+      "identifier": "opener:allow-open-path",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "opener:allow-reveal-item-in-dir",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-write-text-file",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "**" }]
+    },
+    {
+      "identifier": "fs:allow-stat",
+      "allow": [{ "path": "**" }]
+    }
   ]
 }
