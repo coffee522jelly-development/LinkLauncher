@@ -5,14 +5,10 @@
   "windows": ["main"],
   "permissions": [
     "core:default",
-    "opener:allow-open-url",
-    "shell:default",
-    "clipboard-manager:allow-write-text",
-    "clipboard-manager:allow-read-text",
-    "store:default",
-    "dialog:allow-save",
-    "dialog:allow-open",
-    "notification:default",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "http://**" }, { "url": "https://**" }]
+    },
     {
       "identifier": "opener:allow-open-path",
       "allow": [{ "path": "**" }]
@@ -21,6 +17,7 @@
       "identifier": "opener:allow-reveal-item-in-dir",
       "allow": [{ "path": "**" }]
     },
+    "shell:default",
     {
       "identifier": "fs:allow-read-text-file",
       "allow": [{ "path": "**" }]
@@ -36,6 +33,12 @@
     {
       "identifier": "fs:allow-stat",
       "allow": [{ "path": "**" }]
-    }
+    },
+    "clipboard-manager:allow-write-text",
+    "clipboard-manager:allow-read-text",
+    "store:default",
+    "dialog:allow-save",
+    "dialog:allow-open",
+    "notification:default"
   ]
 }

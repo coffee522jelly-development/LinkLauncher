@@ -2,24 +2,33 @@ import { writable } from 'svelte/store';
 import { load } from '@tauri-apps/plugin-store';
 
 export type Theme = 'zinc' | 'blue' | 'rose' | 'green';
+export type ViewMode = 'table' | 'grid';
 
 interface Settings {
   theme: Theme;
+  viewMode: ViewMode;
 }
 
 const STORE_PATH = 'settings.json';
 
 function createSettingsStore() {
-  const { subscribe, set, update } = writable<Settings>({ theme: 'zinc' });
+  const { subscribe, set, update } = writable<Settings>({
+    theme: 'zinc',
+    viewMode: 'table'
+  });
 
   return {
     subscribe,
     load: async () => {
-      const store = await load(STORE_PATH);
-      const saved = await store.get<Settings>('settings');
-      if (saved) {
-        set(saved);
-        applyTheme(saved.theme);
+      try {
+        const store = await load(STORE_PATH);
+        const saved = await store.get<Settings>('settings');
+        if (saved) {
+          set(saved);
+          applyTheme(saved.theme);
+        }
+      } catch (err) {
+        console.error('Failed to load settings:', err);
       }
     },
     setTheme: async (theme: Theme) => {
@@ -31,6 +40,14 @@ function createSettingsStore() {
         return updated;
       });
     },
+    setViewMode: async (viewMode: ViewMode) => {
+      const store = await load(STORE_PATH);
+      update((s) => {
+        const updated = { ...s, viewMode };
+        store.set('settings', updated).then(() => store.save());
+        return updated;
+      });
+    }
   };
 }
 

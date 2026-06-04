@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { linkStore, type Link } from '$lib/linkStore';
-  import { settingsStore, type Theme } from '$lib/settingsStore';
+  import { settingsStore, type Theme, type ViewMode } from '$lib/settingsStore';
   import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -125,7 +125,25 @@
         <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-sm" />
       </div>
     </div>
-    <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => showSettings = !showSettings}>
+    <div class="flex gap-1">
+      <Button
+        variant={$settingsStore.viewMode === 'table' ? 'secondary' : 'ghost'}
+        size="icon" class="h-8 w-8"
+        onclick={() => settingsStore.setViewMode('table')}
+        title="リスト表示"
+      >
+        <LayoutList class="w-4 h-4" />
+      </Button>
+      <Button
+        variant={$settingsStore.viewMode === 'grid' ? 'secondary' : 'ghost'}
+        size="icon" class="h-8 w-8"
+        onclick={() => settingsStore.setViewMode('grid')}
+        title="ボタン表示"
+      >
+        <LayoutGrid class="w-4 h-4" />
+      </Button>
+    </div>
+    <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => showSettings = !showSettings} title="設定">
       <Settings class="w-4 h-4" />
     </Button>
   </div>
@@ -165,97 +183,172 @@
     </div>
   {/if}
 
-  <!-- Table View -->
+  <!-- Content View -->
   <div class="flex-1 border rounded bg-card overflow-hidden flex flex-col">
     <div class="overflow-auto flex-1">
-      <table class="w-full text-xs text-left border-collapse">
-        <thead class="bg-muted text-muted-foreground sticky top-0 z-10">
-          <tr>
-            <th class="px-3 py-2 border-b w-1/4 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('name')}>
-              <div class="flex items-center gap-1">
-                名称
-                {#if sortKey === 'name'}
-                  {sortOrder === 'asc' ? '▲' : '▼'}
-                {/if}
-              </div>
-            </th>
-            <th class="px-3 py-2 border-b w-1/6 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('category')}>
-              <div class="flex items-center gap-1">
-                カテゴリー
-                {#if sortKey === 'category'}
-                  {sortOrder === 'asc' ? '▲' : '▼'}
-                {/if}
-              </div>
-            </th>
-            <th class="px-3 py-2 border-b">パス</th>
-            <th class="px-3 py-2 border-b text-right w-48">アクション</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y">
-          {#each filteredLinks as link (link.id)}
-            <tr class="hover:bg-muted/30 transition-colors">
-              {#if editingId === link.id}
-                <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
-                <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
-                <td class="px-2 py-1"><Input bind:value={editPath} class="h-7 text-[10px] w-full" /></td>
-                <td class="px-3 py-1 text-right space-x-1">
-                  <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={saveEdit} title="保存">
-                    <Check class="w-3.5 h-3.5 text-green-600" />
-                  </Button>
-                  <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={cancelEdit} title="キャンセル">
-                    <X class="w-3.5 h-3.5 text-destructive" />
-                  </Button>
-                </td>
-              {:else}
-                <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
-                <td class="px-3 py-1.5 truncate">
-                  <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
-                    {link.category}
-                  </span>
-                </td>
-                <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
-                  {link.path}
-                </td>
-                <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
-                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => startEdit(link)} title="編集">
-                    <Edit2 class="w-3.5 h-3.5" />
-                  </Button>
-                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
-                    <Copy class="w-3.5 h-3.5" />
-                  </Button>
-
-                  {#if !isUrl(link.path)}
-                    <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
-                      <FolderOpen class="w-3.5 h-3.5" />
-                    </Button>
-                  {/if}
-
-                  <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
-                    {#if isUrl(link.path)}
-                      <ExternalLink class="w-3 h-3 mr-1" />
-                    {:else}
-                      <Play class="w-3 h-3 mr-1" />
-                    {/if}
-                    {getAppButtonLabel(link.path)}
-                  </Button>
-
-                  <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
-                    <Trash2 class="w-3.5 h-3.5" />
-                  </Button>
-                </td>
-              {/if}
-            </tr>
-          {:else}
+      {#if $settingsStore.viewMode === 'table'}
+        <table class="w-full text-xs text-left border-collapse">
+          <thead class="bg-muted text-muted-foreground sticky top-0 z-10">
             <tr>
-              <td colspan="4" class="px-3 py-10 text-center text-muted-foreground">
-                リンクがありません
-              </td>
+              <th class="px-3 py-2 border-b w-1/4 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('name')}>
+                <div class="flex items-center gap-1">
+                  名称
+                  {#if sortKey === 'name'}
+                    {sortOrder === 'asc' ? '▲' : '▼'}
+                  {/if}
+                </div>
+              </th>
+              <th class="px-3 py-2 border-b w-1/6 cursor-pointer hover:text-foreground transition-colors" onclick={() => toggleSort('category')}>
+                <div class="flex items-center gap-1">
+                  カテゴリー
+                  {#if sortKey === 'category'}
+                    {sortOrder === 'asc' ? '▲' : '▼'}
+                  {/if}
+                </div>
+              </th>
+              <th class="px-3 py-2 border-b">パス</th>
+              <th class="px-3 py-2 border-b text-right w-48">アクション</th>
             </tr>
+          </thead>
+          <tbody class="divide-y">
+            {#each filteredLinks as link (link.id)}
+              <tr class="hover:bg-muted/30 transition-colors">
+                {#if editingId === link.id}
+                  <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
+                  <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
+                  <td class="px-2 py-1"><Input bind:value={editPath} class="h-7 text-[10px] w-full" /></td>
+                  <td class="px-3 py-1 text-right space-x-1">
+                    <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={saveEdit} title="保存">
+                      <Check class="w-3.5 h-3.5 text-green-600" />
+                    </Button>
+                    <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={cancelEdit} title="キャンセル">
+                      <X class="w-3.5 h-3.5 text-destructive" />
+                    </Button>
+                  </td>
+                {:else}
+                  <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
+                  <td class="px-3 py-1.5 truncate">
+                    <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
+                      {link.category}
+                    </span>
+                  </td>
+                  <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
+                    {link.path}
+                  </td>
+                  <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
+                    <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => startEdit(link)} title="編集">
+                      <Edit2 class="w-3.5 h-3.5" />
+                    </Button>
+                    <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
+                      <Copy class="w-3.5 h-3.5" />
+                    </Button>
+
+                    {#if !isUrl(link.path)}
+                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                        <FolderOpen class="w-3.5 h-3.5" />
+                      </Button>
+                    {/if}
+
+                    <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
+                      {#if isUrl(link.path)}
+                        <ExternalLink class="w-3 h-3 mr-1" />
+                      {:else}
+                        <Play class="w-3 h-3 mr-1" />
+                      {/if}
+                      {getAppButtonLabel(link.path)}
+                    </Button>
+
+                    <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
+                      <Trash2 class="w-3.5 h-3.5" />
+                    </Button>
+                  </td>
+                {/if}
+              </tr>
+            {:else}
+              <tr>
+                <td colspan="4" class="px-3 py-10 text-center text-muted-foreground">
+                  リンクがありません
+                </td>
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {:else}
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4">
+          {#each filteredLinks as link (link.id)}
+            <div class="group relative bg-background border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2">
+              <div class="flex justify-between items-start">
+                <span class="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold truncate empty:invisible">
+                  {link.category || 'なし'}
+                </span>
+                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button class="hover:text-primary" onclick={() => startEdit(link)} title="編集">
+                     <Edit2 class="w-3 h-3" />
+                   </button>
+                   <button class="hover:text-destructive" onclick={() => linkStore.remove(link.id)} title="削除">
+                     <Trash2 class="w-3 h-3" />
+                   </button>
+                </div>
+              </div>
+
+              <button
+                class="flex-1 text-left py-1"
+                onclick={() => openPath(link.path)}
+                title={link.path}
+              >
+                <div class="font-bold text-sm leading-tight line-clamp-2">{link.name}</div>
+              </button>
+
+              <div class="flex items-center gap-1 pt-2 border-t mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+                <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => copyToClipboard(link.path)} title="コピー">
+                  <Copy class="w-3 h-3" />
+                </Button>
+                {#if !isUrl(link.path)}
+                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                    <FolderOpen class="w-3 h-3" />
+                  </Button>
+                {/if}
+                <div class="flex-1"></div>
+                <Button variant="outline" size="sm" class="h-6 px-2 text-[9px]" onclick={() => openPath(link.path)}>
+                  {getAppButtonLabel(link.path)}
+                </Button>
+              </div>
+            </div>
+          {:else}
+            <div class="col-span-full py-20 text-center text-muted-foreground">
+              リンクがありません
+            </div>
           {/each}
-        </tbody>
-      </table>
+        </div>
+      {/if}
     </div>
   </div>
+
+  {#if editingId && $settingsStore.viewMode === 'grid'}
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-card border rounded-lg shadow-lg w-full max-w-md p-4 space-y-4 animate-in fade-in zoom-in-95">
+        <h3 class="font-bold text-sm">リンクの編集</h3>
+        <div class="space-y-3">
+          <div class="space-y-1">
+            <label for="edit-name" class="text-[10px] text-muted-foreground">名称</label>
+            <Input id="edit-name" bind:value={editName} class="h-8 text-sm" />
+          </div>
+          <div class="space-y-1">
+            <label for="edit-cat" class="text-[10px] text-muted-foreground">カテゴリー</label>
+            <Input id="edit-cat" bind:value={editCategory} class="h-8 text-sm" />
+          </div>
+          <div class="space-y-1">
+            <label for="edit-path" class="text-[10px] text-muted-foreground">URL / パス</label>
+            <Input id="edit-path" bind:value={editPath} class="h-8 text-sm" />
+          </div>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <Button variant="outline" size="sm" onclick={cancelEdit}>キャンセル</Button>
+          <Button size="sm" onclick={saveEdit}>保存</Button>
+        </div>
+      </div>
+    </div>
+  {/if}
 </main>
 
 <style>
