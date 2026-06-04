@@ -51,6 +51,13 @@ function createLinkStore() {
         return updated;
       });
     },
+    update: async (id: string, partial: Partial<Omit<Link, 'id'>>) => {
+      update((links) => {
+        const updated = links.map(l => l.id === id ? { ...l, ...partial } : l);
+        persist(updated);
+        return updated;
+      });
+    },
     remove: async (id: string) => {
       update((links) => {
         const updated = links.filter((link) => link.id !== id);

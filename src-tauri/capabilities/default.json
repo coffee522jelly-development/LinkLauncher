@@ -13,10 +13,12 @@
     "fs:allow-read-text-file",
     "fs:allow-write-text-file",
     "fs:allow-exists",
+    "fs:allow-stat",
     "clipboard-manager:allow-write-text",
     "clipboard-manager:allow-read-text",
     "store:default",
-    "dialog:default",
+    "dialog:allow-save",
+    "dialog:allow-open",
     "notification:default"
   ]
 }

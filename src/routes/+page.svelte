@@ -1,11 +1,11 @@
 <script lang="ts">
   import { onMount } from 'svelte';
-  import { linkStore } from '$lib/linkStore';
+  import { linkStore, type Link } from '$lib/linkStore';
   import { settingsStore, type Theme } from '$lib/settingsStore';
   import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -14,6 +14,12 @@
   let sortKey = $state<'name' | 'category'>('name');
   let sortOrder = $state<'asc' | 'desc'>('asc');
   let showSettings = $state(false);
+
+  // Editing state
+  let editingId = $state<string | null>(null);
+  let editName = $state('');
+  let editCategory = $state('');
+  let editPath = $state('');
 
   onMount(() => {
     linkStore.load();
@@ -40,6 +46,28 @@
       newName = '';
       newPath = '';
       newCategory = '';
+    }
+  }
+
+  function startEdit(link: Link) {
+    editingId = link.id;
+    editName = link.name;
+    editCategory = link.category;
+    editPath = link.path;
+  }
+
+  function cancelEdit() {
+    editingId = null;
+  }
+
+  async function saveEdit() {
+    if (editingId) {
+      await linkStore.update(editingId, {
+        name: editName,
+        category: editCategory,
+        path: editPath
+      });
+      editingId = null;
     }
   }
 
@@ -160,45 +188,62 @@
               </div>
             </th>
             <th class="px-3 py-2 border-b">パス</th>
-            <th class="px-3 py-2 border-b text-right w-40">アクション</th>
+            <th class="px-3 py-2 border-b text-right w-48">アクション</th>
           </tr>
         </thead>
         <tbody class="divide-y">
           {#each filteredLinks as link (link.id)}
             <tr class="hover:bg-muted/30 transition-colors">
-              <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
-              <td class="px-3 py-1.5 truncate">
-                <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
-                  {link.category}
-                </span>
-              </td>
-              <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
-                {link.path}
-              </td>
-              <td class="px-3 py-1.5 text-right space-x-1 whitespace-nowrap">
-                <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
-                  <Copy class="w-3.5 h-3.5" />
-                </Button>
-
-                {#if !isUrl(link.path)}
-                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
-                    <FolderOpen class="w-3.5 h-3.5" />
+              {#if editingId === link.id}
+                <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
+                <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
+                <td class="px-2 py-1"><Input bind:value={editPath} class="h-7 text-[10px] w-full" /></td>
+                <td class="px-3 py-1 text-right space-x-1">
+                  <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={saveEdit} title="保存">
+                    <Check class="w-3.5 h-3.5 text-green-600" />
                   </Button>
-                {/if}
+                  <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={cancelEdit} title="キャンセル">
+                    <X class="w-3.5 h-3.5 text-destructive" />
+                  </Button>
+                </td>
+              {:else}
+                <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
+                <td class="px-3 py-1.5 truncate">
+                  <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
+                    {link.category}
+                  </span>
+                </td>
+                <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
+                  {link.path}
+                </td>
+                <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
+                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => startEdit(link)} title="編集">
+                    <Edit2 class="w-3.5 h-3.5" />
+                  </Button>
+                  <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
+                    <Copy class="w-3.5 h-3.5" />
+                  </Button>
 
-                <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
-                  {#if isUrl(link.path)}
-                    <ExternalLink class="w-3 h-3 mr-1" />
-                  {:else}
-                    <Play class="w-3 h-3 mr-1" />
+                  {#if !isUrl(link.path)}
+                    <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                      <FolderOpen class="w-3.5 h-3.5" />
+                    </Button>
                   {/if}
-                  {getAppButtonLabel(link.path)}
-                </Button>
 
-                <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
-                  <Trash2 class="w-3.5 h-3.5" />
-                </Button>
-              </td>
+                  <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
+                    {#if isUrl(link.path)}
+                      <ExternalLink class="w-3 h-3 mr-1" />
+                    {:else}
+                      <Play class="w-3 h-3 mr-1" />
+                    {/if}
+                    {getAppButtonLabel(link.path)}
+                  </Button>
+
+                  <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
+                    <Trash2 class="w-3.5 h-3.5" />
+                  </Button>
+                </td>
+              {/if}
             </tr>
           {:else}
             <tr>
