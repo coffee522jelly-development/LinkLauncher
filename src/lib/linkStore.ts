@@ -12,6 +12,31 @@ export interface Link {
 
 const STORE_PATH = 'links.json';
 
+function parseCSVLine(line: string): string[] {
+  const parts = [];
+  let current = '';
+  let inQuotes = false;
+
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (char === '"') {
+      if (inQuotes && line[i+1] === '"') {
+        current += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === ',' && !inQuotes) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  parts.push(current);
+  return parts;
+}
+
 function createLinkStore() {
   const { subscribe, set, update } = writable<Link[]>([]);
 
@@ -95,21 +120,18 @@ function createLinkStore() {
 
         if (selected && typeof selected === 'string') {
           const content = await readTextFile(selected);
-          const lines = content.split('\n').filter(line => line.trim() !== '');
+          const lines = content.split(/\r?\n/).filter(line => line.trim() !== '');
           const dataLines = lines.slice(1);
 
           const importedLinks: Link[] = [];
           for (const line of dataLines) {
-            const parts = line.match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
+            const parts = parseCSVLine(line);
             if (parts && parts.length >= 2) {
-              const name = parts[0].replace(/^"|"$/g, '').replace(/""/g, '"');
-              const category = parts[1].replace(/^"|"$/g, '').replace(/""/g, '"');
-              const path = (parts[2] || '').replace(/^"|"$/g, '').replace(/""/g, '"');
               importedLinks.push({
                 id: crypto.randomUUID(),
-                name,
-                category,
-                path
+                name: parts[0],
+                category: parts[1],
+                path: parts[2] || ''
               });
             }
           }
