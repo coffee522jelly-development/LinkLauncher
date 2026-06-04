@@ -41,12 +41,18 @@ function createSettingsStore() {
       });
     },
     setViewMode: async (viewMode: ViewMode) => {
-      const store = await load(STORE_PATH);
-      update((s) => {
-        const updated = { ...s, viewMode };
-        store.set('settings', updated).then(() => store.save());
-        return updated;
-      });
+      try {
+        const store = await load(STORE_PATH);
+        update((s) => {
+          const updated = { ...s, viewMode };
+          store.set('settings', updated).then(() => store.save());
+          return updated;
+        });
+      } catch (err) {
+        console.error('Failed to save viewMode:', err);
+        // Fallback for browser verification
+        update((s) => ({ ...s, viewMode }));
+      }
     }
   };
 }

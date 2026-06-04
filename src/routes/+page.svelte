@@ -5,7 +5,7 @@
   import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -118,11 +118,30 @@
       追加
     </Button>
     <div class="w-px h-8 bg-border mx-1"></div>
-    <div class="flex-1 relative space-y-1">
+    <div class="flex-[1.2] relative space-y-1">
       <label for="search" class="text-xs text-muted-foreground ml-1">検索</label>
       <div class="relative">
         <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
         <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-sm" />
+      </div>
+    </div>
+    <div class="flex items-end gap-1">
+      <div class="flex flex-col space-y-1">
+        <span class="text-[10px] text-muted-foreground ml-1">並び替え</span>
+        <div class="flex border rounded h-8 overflow-hidden bg-background">
+          <button
+            class="px-2 text-[10px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('name')}
+          >
+            名前 {sortKey === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+          </button>
+          <button
+            class="px-2 text-[10px] hover:bg-muted transition-colors {sortKey === 'category' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('category')}
+          >
+            カテゴリ {sortKey === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+          </button>
+        </div>
       </div>
     </div>
     <div class="flex gap-1">
