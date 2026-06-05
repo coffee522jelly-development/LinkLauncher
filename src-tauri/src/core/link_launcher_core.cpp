@@ -1,13 +1,15 @@
 #include "cLinkLauncher.h"
 #include "link_launcher_core.h"
 
-// ŠO•”ŒöŠJAPI
-// –ß‚è’lF¬Œ÷=0A¸”s-1
-// ˆø”FƒpƒX
-int core_launch_path(const char* path)
-{
-    if (path == nullptr)    return -1;
+// å¤–éƒ¨å…¬é–‹API
+// æˆ»ã‚Šå€¤ï¼šæˆåŠŸ=0ï¼Œå¤±æ•—-1
+// å¼•æ•°ï¼šãƒ‘ã‚¹
+extern "C" {
+    int core_launch_path(const char* path)
+    {
+        if (path == nullptr)    return -1;
 
-    CLinkLauncher   aLauncher;
-    return aLauncher.Launch(path) ? 0 : -1;
+        CLinkLauncher   aLauncher;
+        return aLauncher.Launch(path);
+    }
 }

@@ -1,11 +1,11 @@
-#include "link_launcher.h"
+#include "cLinkLauncher.h"
 
 #include <windows.h>
 #include <shellapi.h>
 
-// UTF-8‚ğUTF-16‚É•ÏŠ·‚·‚é
-// –ß‚è’lFUTF-16ƒeƒLƒXƒg
-// ˆø”FUTF-8ƒeƒLƒXƒg
+// UTF-8ã‚’UTF-16ã«å¤‰æ›ã™ã‚‹
+// æˆ»ã‚Šå€¤ï¼šUTF-16ãƒ†ã‚­ã‚¹ãƒˆ
+// å¼•æ•°ï¼šUTF-8ãƒ†ã‚­ã‚¹ãƒˆ
 std::wstring CLinkLauncher::Utf8ToWide(const std::string& text) const
 {
     const int size = MultiByteToWideChar(
@@ -18,6 +18,7 @@ std::wstring CLinkLauncher::Utf8ToWide(const std::string& text) const
 
     if (size <= 0)  return L"";
 
+    // MultiByteToWideChar includes null terminator in size when -1 is passed
     std::wstring result(size, L'\0');
 
     MultiByteToWideChar(
@@ -28,17 +29,18 @@ std::wstring CLinkLauncher::Utf8ToWide(const std::string& text) const
         result.data(),
         size);
 
-    return result;
+    // result.data() is updated, but size might include null terminator
+    return result.c_str();
 }
 
 
-// ƒpƒX‚ğŠJ‚­ŠÖ”
-// –ß‚è’lFŠù’è‚ÌƒAƒvƒŠ‚ÅƒpƒX‚Ìƒtƒ@ƒCƒ‹‚ğŠJ‚¯‚½‚©H
-// ˆø”FƒpƒX
-bool CLinkLauncher::Launch(const std::string& path) const
+// ãƒ‘ã‚¹ã‚’é–‹ãé–¢æ•°
+// æˆ»ã‚Šå€¤ï¼šè¦å®šã®ã‚¢ãƒ—ãƒªã§ãƒ‘ã‚¹ã®ãƒ•ã‚¡ã‚¤ãƒ«ã‚’é–‹ã‘ãŸã‹ï¼Ÿ
+// å¼•æ•°ï¼šãƒ‘ã‚¹
+int CLinkLauncher::Launch(const std::string& path) const
 {
     const std::wstring widePath = Utf8ToWide(path);
-    if (widePath.empty())   return false;
+    if (widePath.empty())   return -1;
 
     const HINSTANCE hResult = ShellExecuteW(
         nullptr,
@@ -48,5 +50,5 @@ bool CLinkLauncher::Launch(const std::string& path) const
         nullptr,
         SW_SHOWNORMAL);
 
-    return reinterpret_cast<INT_PTR>(hResult) > 32;
+    return (reinterpret_cast<INT_PTR>(hResult) > 32) ? 0 : (int)reinterpret_cast<INT_PTR>(hResult);
 }
