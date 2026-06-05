@@ -1,6 +1,7 @@
 import { writeText } from '@tauri-apps/plugin-clipboard-manager';
 import { openUrl, openPath as tauriOpenPath, revealItemInDir } from '@tauri-apps/plugin-opener';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
+import { invoke } from '@tauri-apps/api/core';
 
 async function notify(title: string, body: string) {
   try {
@@ -29,14 +30,21 @@ export async function copyToClipboard(text: string) {
 
 export async function openPath(path: string) {
   try {
-    if (path.startsWith('http')) {
-      await openUrl(path);
-    } else {
-      await tauriOpenPath(path);
-    }
+    // Calling our new C++ Core via Rust Bridge
+    await invoke('launch_link', { path });
   } catch (err) {
-    console.error('Failed to open path:', err);
-    await notify('エラー', `パスを開けませんでした: ${err}`);
+    console.error('Failed to open path via Core Engine:', err);
+    // Fallback to Tauri plugin if C++ Core fails for any reason
+    try {
+      if (path.startsWith('http')) {
+        await openUrl(path);
+      } else {
+        await tauriOpenPath(path);
+      }
+    } catch (fallbackErr) {
+      console.error('Fallback also failed:', fallbackErr);
+      await notify('エラー', `パスを開けませんでした: ${fallbackErr}`);
+    }
   }
 }
 
