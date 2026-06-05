@@ -52,3 +52,27 @@ int CLinkLauncher::Launch(const std::string& path) const
 
     return (reinterpret_cast<INT_PTR>(hResult) > 32) ? 0 : (int)reinterpret_cast<INT_PTR>(hResult);
 }
+
+
+// エクスプローラーで表示する関数
+// 戻り値：エクスプローラーを開けたか？
+// 引数：パス
+int CLinkLauncher::Reveal(const std::string& path) const
+{
+    const std::wstring widePath = Utf8ToWide(path);
+    if (widePath.empty())   return -1;
+
+    // ファイルが指定されている場合は、そのファイルを選択した状態でエクスプローラーを開く
+    // /select, "path" を引数に渡す
+    std::wstring params = L"/select,\"" + widePath + L"\"";
+
+    const HINSTANCE hResult = ShellExecuteW(
+        nullptr,
+        L"open",
+        L"explorer.exe",
+        params.c_str(),
+        nullptr,
+        SW_SHOWNORMAL);
+
+    return (reinterpret_cast<INT_PTR>(hResult) > 32) ? 0 : (int)reinterpret_cast<INT_PTR>(hResult);
+}

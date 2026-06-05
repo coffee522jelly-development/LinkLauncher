@@ -87,6 +87,10 @@
   function getAppButtonLabel(path: string) {
     if (isUrl(path)) return 'ブラウザ';
     if (path.toLowerCase().endsWith('.xlsx')) return 'Excel';
+    if (path.includes('\\') || path.includes('/')) {
+       const isFile = /\.[a-z0-9]+$/i.test(path);
+       return isFile ? '開く' : 'フォルダ';
+    }
     return '開く';
   }
 
@@ -263,7 +267,7 @@
                     </Button>
 
                     {#if !isUrl(link.path)}
-                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="場所を表示">
                         <FolderOpen class="w-3.5 h-3.5" />
                       </Button>
                     {/if}
@@ -323,7 +327,7 @@
                   <Copy class="w-3 h-3" />
                 </Button>
                 {#if !isUrl(link.path)}
-                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="フォルダ">
+                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="場所を表示">
                     <FolderOpen class="w-3 h-3" />
                   </Button>
                 {/if}

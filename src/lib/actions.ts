@@ -55,24 +55,16 @@ export async function revealInExplorer(path: string) {
       return;
     }
 
-    // revealItemInDir is the recommended way in Tauri v2 to open the folder and highlight the item.
-    await revealItemInDir(path);
+    // Using our new C++ Core for better file selection support
+    await invoke('reveal_link', { path });
   } catch (err) {
-    console.error('Failed to reveal in explorer:', err);
-    // Fallback: try opening parent dir with openPath if revealItemInDir fails
+    console.error('Failed to reveal in explorer via Core Engine:', err);
+    // Fallback: try Tauri v2 native reveal
     try {
-      const isFile = /\.[a-z0-9]+$/i.test(path);
-      if (isFile) {
-        const lastSlash = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
-        if (lastSlash !== -1) {
-          const dir = path.substring(0, lastSlash);
-          await tauriOpenPath(dir);
-          return;
-        }
-      }
-      await tauriOpenPath(path);
-    } catch (innerErr) {
-      await notify('エラー', `フォルダを開けませんでした: ${innerErr}`);
+      await revealItemInDir(path);
+    } catch (fallbackErr) {
+      console.error('Fallback reveal failed:', fallbackErr);
+      await notify('エラー', `フォルダを開けませんでした: ${fallbackErr}`);
     }
   }
 }

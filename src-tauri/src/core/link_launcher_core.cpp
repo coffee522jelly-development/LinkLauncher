@@ -12,4 +12,12 @@ extern "C" {
         CLinkLauncher   aLauncher;
         return aLauncher.Launch(path);
     }
+
+    int core_reveal_path(const char* path)
+    {
+        if (path == nullptr)    return -1;
+
+        CLinkLauncher   aLauncher;
+        return aLauncher.Reveal(path);
+    }
 }

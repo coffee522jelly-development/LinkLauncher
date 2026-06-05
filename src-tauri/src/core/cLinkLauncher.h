@@ -6,6 +6,7 @@ class CLinkLauncher
 {
 public:
     int Launch(const std::string& path) const;
+    int Reveal(const std::string& path) const;
 
 private:
     std::wstring Utf8ToWide(const std::string& text) const;
