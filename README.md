@@ -1,7 +1,60 @@
-# Tauri + SvelteKit + TypeScript
+# LinkLauncher (リンクランチャー)
 
-This template should help get you started developing with Tauri, SvelteKit and TypeScript in Vite.
+LinkLauncher は、業務で頻繁に使用する URL やファイルパスを効率的に管理・起動するためのデスクトップアプリケーションです。ブラウザのブックマークとは異なり、業務に必要なリソースだけに絞り込むことで、迷いなく目的の場所にアクセスできる環境を提供します。
 
-## Recommended IDE Setup
+Tauri v2 と Svelte 5 を使用して構築されており、軽量で高速に動作します。
 
-[VS Code](https://code.visualstudio.com/) + [Svelte](https://marketplace.visualstudio.com/items?itemName=svelte.svelte-vscode) + [Tauri](https://marketplace.visualstudio.com/items?itemName=tauri-apps.tauri-vscode) + [rust-analyzer](https://marketplace.visualstudio.com/items?itemName=rust-lang.rust-analyzer).
+## 主な機能
+
+- **リンク管理**: 名称、URL またはファイルパス、カテゴリーを登録・編集・削除できます。
+- **マルチビュー表示**:
+  - **リスト形式**: 詳細な情報を一覧で確認できる表示モード。
+  - **ボタン形式 (グリッド)**: アイコン感覚で直感的にクリックできる表示モード。
+- **クイックアクション**:
+  - **開く**: URL ならブラウザ、ファイルなら規定のアプリで開きます（.xlsx なら Excel など）。
+  - **場所を表示**: ファイルが保存されているフォルダを開き、そのファイルを選択状態にします。
+  - **ターミナルで開く**: そのディレクトリでコマンドプロンプトを起動します（自動的に `cd` します）。
+  - **コピー**: パスをクリップボードにコピーします。
+- **検索と絞り込み**: 登録した名称やパス、カテゴリーでリアルタイムに検索・抽出が可能です。
+- **並び替え**: 名称やカテゴリーで昇順・降順のソートが可能です。
+- **テーマ設定**: 6つのカラーテーマ（Zinc, Blue, Rose, Green, Orange, Slate）から選択でき、システム設定に合わせてダークモードにも対応します。
+- **データ管理**: CSV 形式でのインポート・エクスポートに対応しており、データのバックアップや移行が容易です。
+
+## 技術スタック
+
+- **Frontend**: Svelte 5 (Runes), TypeScript, Tailwind CSS
+- **Backend**: Rust (Tauri v2)
+- **Persistence**: @tauri-apps/plugin-store (JSON)
+- **Plugins**: opener, fs, dialog, notification, clipboard-manager
+
+## 開発環境のセットアップ
+
+### 前提条件
+
+- [Node.js](https://nodejs.org/) (LTS)
+- [Rust](https://www.rust-lang.org/) (Tauri のシステム要件を満たしていること)
+
+### インストール
+
+```bash
+# 依存関係のインストール
+npm install
+```
+
+### 開発用サーバーの起動
+
+```bash
+# 開発モードで起動
+npm run dev
+```
+
+### ビルド
+
+```bash
+# インストーラーの作成 (MSI/NSIS)
+npm run tauri build
+```
+
+## ライセンス
+
+MIT License
