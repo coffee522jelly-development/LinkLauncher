@@ -99,6 +99,8 @@
     { name: 'Blue', value: 'blue', color: 'bg-blue-500' },
     { name: 'Rose', value: 'rose', color: 'bg-rose-500' },
     { name: 'Green', value: 'green', color: 'bg-green-500' },
+    { name: 'Orange', value: 'orange', color: 'bg-orange-500' },
+    { name: 'Slate', value: 'slate', color: 'bg-slate-500' },
   ];
 </script>
 

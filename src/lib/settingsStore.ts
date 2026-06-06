@@ -1,7 +1,7 @@
 import { writable } from 'svelte/store';
 import { load } from '@tauri-apps/plugin-store';
 
-export type Theme = 'zinc' | 'blue' | 'rose' | 'green';
+export type Theme = 'zinc' | 'blue' | 'rose' | 'green' | 'orange' | 'slate';
 export type ViewMode = 'table' | 'grid';
 
 interface Settings {

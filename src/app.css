@@ -26,19 +26,67 @@
     --radius: 0.5rem;
   }
 
+  /* Zinc Theme */
+  [data-theme='zinc'] {
+    --primary: 240 5.9% 10%;
+    --background: 240 4.8% 98%;
+    --muted: 240 4.8% 95.9%;
+    --border: 240 5.9% 90%;
+  }
+
+  /* Blue Theme */
   [data-theme='blue'] {
+    --background: 210 40% 98%;
     --primary: 221.2 83.2% 53.3%;
-    --ring: 221.2 83.2% 53.3%;
+    --secondary: 210 40% 96.1%;
+    --muted: 210 40% 94%;
+    --muted-foreground: 215.4 16.3% 44%;
+    --accent: 210 40% 92%;
+    --border: 214.3 31.8% 90%;
   }
 
+  /* Rose Theme */
   [data-theme='rose'] {
+    --background: 350 40% 99%;
     --primary: 346.8 77.2% 49.8%;
-    --ring: 346.8 77.2% 49.8%;
+    --secondary: 350 40% 96.1%;
+    --muted: 350 40% 94%;
+    --muted-foreground: 350 20% 45%;
+    --accent: 350 40% 92%;
+    --border: 350 20% 90%;
   }
 
+  /* Green Theme */
   [data-theme='green'] {
+    --background: 142 30% 98%;
     --primary: 142.1 76.2% 36.3%;
-    --ring: 142.1 76.2% 36.3%;
+    --secondary: 142 30% 95%;
+    --muted: 142 30% 92%;
+    --muted-foreground: 142 20% 40%;
+    --accent: 142 30% 90%;
+    --border: 142 20% 88%;
+  }
+
+  /* Orange Theme */
+  [data-theme='orange'] {
+    --background: 30 40% 98%;
+    --primary: 24.6 95% 53.1%;
+    --secondary: 30 40% 95%;
+    --muted: 30 40% 92%;
+    --muted-foreground: 25 30% 40%;
+    --accent: 30 40% 90%;
+    --border: 30 20% 88%;
+  }
+
+  /* Slate Theme */
+  [data-theme='slate'] {
+    --background: 210 20% 98%;
+    --primary: 215.4 16.3% 46.9%;
+    --secondary: 210 20% 95%;
+    --muted: 210 20% 92%;
+    --muted-foreground: 215 15% 45%;
+    --accent: 210 20% 90%;
+    --border: 210 20% 88%;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -64,14 +112,54 @@
       --ring: 240 4.9% 83.9%;
     }
 
+    [data-theme='zinc'] {
+      --background: 240 10% 3.9%;
+      --accent: 240 3.7% 18%;
+    }
+
     [data-theme='blue'] {
+      --background: 222.2 47.4% 4.1%;
       --primary: 217.2 91.2% 59.8%;
+      --secondary: 217.2 32.6% 12.5%;
+      --accent: 217.2 32.6% 20%;
+      --border: 217.2 32.6% 17.5%;
+      --muted: 217.2 32.6% 15%;
     }
+
     [data-theme='rose'] {
+      --background: 350 40% 5%;
       --primary: 346.8 77.2% 49.8%;
+      --secondary: 350 30% 12%;
+      --accent: 350 30% 18%;
+      --border: 350 20% 15%;
+      --muted: 350 30% 14%;
     }
+
     [data-theme='green'] {
+      --background: 142 40% 3%;
       --primary: 142.1 70.6% 45.3%;
+      --secondary: 142 30% 10%;
+      --accent: 142 30% 15%;
+      --border: 142 20% 12%;
+      --muted: 142 30% 12%;
+    }
+
+    [data-theme='orange'] {
+      --background: 20 40% 4%;
+      --primary: 24.6 95% 53.1%;
+      --secondary: 20 30% 12%;
+      --accent: 20 30% 18%;
+      --border: 20 20% 15%;
+      --muted: 20 30% 14%;
+    }
+
+    [data-theme='slate'] {
+      --background: 222.2 47.4% 11.2%;
+      --primary: 215.4 16.3% 56.9%;
+      --secondary: 217.2 32.6% 17.5%;
+      --accent: 217.2 32.6% 25%;
+      --border: 217.2 32.6% 22.5%;
+      --muted: 217.2 32.6% 20%;
     }
   }
 }
