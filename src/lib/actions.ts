@@ -52,3 +52,14 @@ export async function revealInExplorer(path: string) {
     await notify('エラー', `フォルダを開けませんでした: ${err}`);
   }
 }
+
+export async function openTerminal(path: string) {
+  try {
+    if (path.startsWith('http')) return;
+
+    await invoke('open_terminal', { path });
+  } catch (err) {
+    console.error('Failed to open terminal:', err);
+    await notify('エラー', `コマンドプロンプトを開けませんでした: ${err}`);
+  }
+}

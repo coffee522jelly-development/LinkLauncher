@@ -2,10 +2,10 @@
   import { onMount } from 'svelte';
   import { linkStore, type Link } from '$lib/linkStore';
   import { settingsStore, type Theme, type ViewMode } from '$lib/settingsStore';
-  import { copyToClipboard, openPath, revealInExplorer } from '$lib/actions';
+  import { copyToClipboard, openPath, revealInExplorer, openTerminal } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -272,6 +272,9 @@
                       <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="場所を表示">
                         <FolderOpen class="w-3.5 h-3.5" />
                       </Button>
+                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => openTerminal(link.path)} title="ターミナル">
+                        <Terminal class="w-3.5 h-3.5" />
+                      </Button>
                     {/if}
 
                     <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
@@ -329,9 +332,14 @@
                   <Copy class="w-3 h-3" />
                 </Button>
                 {#if !isUrl(link.path)}
-                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="場所を表示">
-                    <FolderOpen class="w-3 h-3" />
-                  </Button>
+                  <div class="flex gap-0.5">
+                    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="場所を表示">
+                      <FolderOpen class="w-3 h-3" />
+                    </Button>
+                    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => openTerminal(link.path)} title="ターミナル">
+                      <Terminal class="w-3 h-3" />
+                    </Button>
+                  </div>
                 {/if}
                 <div class="flex-1"></div>
                 <Button variant="outline" size="sm" class="h-6 px-2 text-[9px]" onclick={() => openPath(link.path)}>
