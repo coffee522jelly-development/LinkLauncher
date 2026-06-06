@@ -30,21 +30,11 @@ export async function copyToClipboard(text: string) {
 
 export async function openPath(path: string) {
   try {
-    // Calling our new C++ Core via Rust Bridge
+    // Using Rust command which utilizes the official tauri-plugin-opener
     await invoke('launch_link', { path });
   } catch (err) {
-    console.error('Failed to open path via Core Engine:', err);
-    // Fallback to Tauri plugin if C++ Core fails for any reason
-    try {
-      if (path.startsWith('http')) {
-        await openUrl(path);
-      } else {
-        await tauriOpenPath(path);
-      }
-    } catch (fallbackErr) {
-      console.error('Fallback also failed:', fallbackErr);
-      await notify('エラー', `パスを開けませんでした: ${fallbackErr}`);
-    }
+    console.error('Failed to open path:', err);
+    await notify('エラー', `パスを開けませんでした: ${err}`);
   }
 }
 
@@ -55,16 +45,10 @@ export async function revealInExplorer(path: string) {
       return;
     }
 
-    // Using our new C++ Core for better file selection support
+    // Using Rust command which utilizes the official tauri-plugin-opener
     await invoke('reveal_link', { path });
   } catch (err) {
-    console.error('Failed to reveal in explorer via Core Engine:', err);
-    // Fallback: try Tauri v2 native reveal
-    try {
-      await revealItemInDir(path);
-    } catch (fallbackErr) {
-      console.error('Fallback reveal failed:', fallbackErr);
-      await notify('エラー', `フォルダを開けませんでした: ${fallbackErr}`);
-    }
+    console.error('Failed to reveal in explorer:', err);
+    await notify('エラー', `フォルダを開けませんでした: ${err}`);
   }
 }
