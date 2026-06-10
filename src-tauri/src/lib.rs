@@ -82,6 +82,7 @@ pub fn run() {
         .plugin(tauri_plugin_store::Builder::default().build())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_window_state::Builder::default().build())
         .invoke_handler(tauri::generate_handler![launch_link, reveal_link, open_terminal])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
