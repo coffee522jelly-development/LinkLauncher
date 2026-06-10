@@ -11,7 +11,7 @@
   let newPath = $state('');
   let newCategory = $state('');
   let searchQuery = $state('');
-  let sortKey = $state<'name' | 'category'>('name');
+  let sortKey = $state<'name' | 'category' | 'manual'>('manual');
   let sortOrder = $state<'asc' | 'desc'>('asc');
   let showSettings = $state(false);
 
@@ -32,6 +32,7 @@
       link.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
       link.category.toLowerCase().includes(searchQuery.toLowerCase())
     ).sort((a, b) => {
+      if (sortKey === 'manual') return 0;
       const valA = a[sortKey].toLowerCase();
       const valB = b[sortKey].toLowerCase();
       if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
@@ -71,7 +72,7 @@
     }
   }
 
-  function toggleSort(key: 'name' | 'category') {
+  function toggleSort(key: 'name' | 'category' | 'manual') {
     if (sortKey === key) {
       sortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
     } else {
@@ -135,6 +136,12 @@
       <div class="flex flex-col space-y-1">
         <span class="text-[10px] text-muted-foreground ml-1">並び替え</span>
         <div class="flex border rounded h-8 overflow-hidden bg-background">
+          <button
+            class="px-2 text-[10px] hover:bg-muted border-r transition-colors {sortKey === 'manual' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('manual')}
+          >
+            カスタム
+          </button>
           <button
             class="px-2 text-[10px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
             onclick={() => toggleSort('name')}
@@ -303,8 +310,35 @@
         </table>
       {:else}
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4">
-          {#each filteredLinks as link (link.id)}
-            <div class="group relative bg-background border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2">
+          {#each filteredLinks as link, i (link.id)}
+            <div
+              class="group relative bg-background border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing"
+              draggable={sortKey === 'manual' && searchQuery === ''}
+              ondragstart={(e) => {
+                e.dataTransfer?.setData('text/plain', i.toString());
+                (e.currentTarget as HTMLElement).classList.add('opacity-50');
+              }}
+              ondragend={(e) => {
+                (e.currentTarget as HTMLElement).classList.remove('opacity-50');
+              }}
+              ondragover={(e) => {
+                e.preventDefault();
+                if (sortKey === 'manual') {
+                  (e.currentTarget as HTMLElement).classList.add('border-primary');
+                }
+              }}
+              ondragleave={(e) => {
+                (e.currentTarget as HTMLElement).classList.remove('border-primary');
+              }}
+              ondrop={(e) => {
+                e.preventDefault();
+                (e.currentTarget as HTMLElement).classList.remove('border-primary');
+                const fromIndex = parseInt(e.dataTransfer?.getData('text/plain') || '-1');
+                if (fromIndex !== -1 && fromIndex !== i) {
+                  linkStore.reorder(fromIndex, i);
+                }
+              }}
+            >
               <div class="flex justify-between items-start">
                 <span class="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold truncate empty:invisible">
                   {link.category || 'なし'}

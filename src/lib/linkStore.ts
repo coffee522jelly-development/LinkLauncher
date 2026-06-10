@@ -76,6 +76,17 @@ function createLinkStore() {
         return updated;
       });
     },
+
+  reorder: async (fromIndex: number, toIndex: number) => {
+    const store = await load(STORE_PATH);
+    update((links) => {
+      const updated = [...links];
+      const [removed] = updated.splice(fromIndex, 1);
+      updated.splice(toIndex, 0, removed);
+      store.set('links', updated).then(() => store.save());
+      return updated;
+    });
+  },
     update: async (id: string, partial: Partial<Omit<Link, 'id'>>) => {
       update((links) => {
         const updated = links.map(l => l.id === id ? { ...l, ...partial } : l);
