@@ -5,7 +5,7 @@
   import { copyToClipboard, openPath, revealInExplorer, openTerminal } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -258,9 +258,21 @@
                     </Button>
                   </td>
                 {:else}
-                  <td class="px-3 py-1.5 font-medium truncate">{link.name}</td>
+                  <td class="px-3 py-1.5 font-medium truncate">
+                    <div class="flex items-center gap-1.5">
+                      {#if isUrl(link.path)}
+                        <Globe class="w-3 h-3 text-blue-500" />
+                      {:else}
+                        <File class="w-3 h-3 text-zinc-500" />
+                      {/if}
+                      {link.name}
+                    </div>
+                  </td>
                   <td class="px-3 py-1.5 truncate">
-                    <span class="px-1.5 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-semibold empty:hidden">
+                    <span class="px-1.5 py-0.5 rounded-full text-[10px] font-bold empty:hidden
+                      {link.category === 'Web' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                       link.category === 'Local' ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' :
+                       'bg-primary/10 text-primary'}">
                       {link.category}
                     </span>
                   </td>
@@ -340,7 +352,10 @@
               }}
             >
               <div class="flex justify-between items-start">
-                <span class="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-semibold truncate empty:invisible">
+                <span class="text-[9px] px-1.5 py-0.5 rounded font-bold truncate empty:invisible
+                  {link.category === 'Web' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                   link.category === 'Local' ? 'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-300' :
+                   'bg-primary/10 text-primary'}">
                   {link.category || 'なし'}
                 </span>
                 <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -358,7 +373,14 @@
                 onclick={() => openPath(link.path)}
                 title={link.path}
               >
-                <div class="font-bold text-sm leading-tight line-clamp-2">{link.name}</div>
+                <div class="flex items-center gap-1.5">
+                  {#if isUrl(link.path)}
+                    <Globe class="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  {:else}
+                    <File class="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                  {/if}
+                  <div class="font-bold text-sm leading-tight line-clamp-2">{link.name}</div>
+                </div>
               </button>
 
               <div class="flex items-center gap-1 pt-2 border-t mt-auto opacity-0 group-hover:opacity-100 transition-opacity">

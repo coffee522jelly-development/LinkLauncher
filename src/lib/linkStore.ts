@@ -64,11 +64,16 @@ function createLinkStore() {
       }
     },
     add: async (name: string, path: string, category: string = '') => {
+      let finalCategory = category;
+      if (!finalCategory) {
+        finalCategory = path.startsWith('http') ? 'Web' : 'Local';
+      }
+
       const newLink: Link = {
         id: crypto.randomUUID(),
         name,
         path,
-        category,
+        category: finalCategory,
       };
       update((links) => {
         const updated = [...links, newLink];
