@@ -8,6 +8,7 @@ export interface Link {
   name: string;
   path: string;
   category: string;
+  isPinned?: boolean;
 }
 
 const STORE_PATH = 'links.json';
@@ -74,6 +75,7 @@ function createLinkStore() {
         name,
         path,
         category: finalCategory,
+        isPinned: false,
       };
       update((links) => {
         const updated = [...links, newLink];
@@ -82,13 +84,26 @@ function createLinkStore() {
       });
     },
 
-  reorder: async (fromIndex: number, toIndex: number) => {
+    togglePin: async (id: string) => {
+      update((links) => {
+        const updated = links.map(l => l.id === id ? { ...l, isPinned: !l.isPinned } : l);
+        persist(updated);
+        return updated;
+      });
+    },
+
+  reorder: async (fromId: string, toId: string) => {
     const store = await load(STORE_PATH);
     update((links) => {
       const updated = [...links];
-      const [removed] = updated.splice(fromIndex, 1);
-      updated.splice(toIndex, 0, removed);
-      store.set('links', updated).then(() => store.save());
+      const fromIdx = updated.findIndex(l => l.id === fromId);
+      const toIdx = updated.findIndex(l => l.id === toId);
+
+      if (fromIdx !== -1 && toIdx !== -1) {
+        const [removed] = updated.splice(fromIdx, 1);
+        updated.splice(toIdx, 0, removed);
+        store.set('links', updated).then(() => store.save());
+      }
       return updated;
     });
   },
@@ -117,9 +132,9 @@ function createLinkStore() {
         });
 
         if (filePath) {
-          const header = '名称,カテゴリー,パス\n';
+          const header = '名称,カテゴリー,パス,ピン留め\n';
           const content = links.map(l =>
-            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}"`
+            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}"`
           ).join('\n');
           await writeTextFile(filePath, header + content);
         }
@@ -147,7 +162,8 @@ function createLinkStore() {
                 id: crypto.randomUUID(),
                 name: parts[0],
                 category: parts[1],
-                path: parts[2] || ''
+                path: parts[2] || '',
+                isPinned: parts[3] === '1'
               });
             }
           }

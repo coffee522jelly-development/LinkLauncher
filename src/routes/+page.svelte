@@ -5,7 +5,7 @@
   import { copyToClipboard, openPath, revealInExplorer, openTerminal } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -32,9 +32,14 @@
       link.path.toLowerCase().includes(searchQuery.toLowerCase()) ||
       link.category.toLowerCase().includes(searchQuery.toLowerCase())
     ).sort((a, b) => {
+      // Pinned items always come first
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+
+      // If both are pinned or both are unpinned, apply selected sort
       if (sortKey === 'manual') return 0;
-      const valA = a[sortKey].toLowerCase();
-      const valB = b[sortKey].toLowerCase();
+      const valA = (a[sortKey] || '').toLowerCase();
+      const valB = (b[sortKey] || '').toLowerCase();
       if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
       if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
       return 0;
@@ -244,7 +249,7 @@
           </thead>
           <tbody class="divide-y">
             {#each filteredLinks as link (link.id)}
-              <tr class="hover:bg-muted/30 transition-colors">
+              <tr class="hover:bg-muted/30 transition-colors {link.isPinned ? 'bg-primary/5' : ''}">
                 {#if editingId === link.id}
                   <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
                   <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
@@ -280,6 +285,13 @@
                     {link.path}
                   </td>
                   <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
+                    <Button variant="ghost" size="icon" class="h-7 w-7 {link.isPinned ? 'text-primary' : 'text-muted-foreground'}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
+                      {#if link.isPinned}
+                        <PinOff class="w-3.5 h-3.5" />
+                      {:else}
+                        <Pin class="w-3.5 h-3.5" />
+                      {/if}
+                    </Button>
                     <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => startEdit(link)} title="編集">
                       <Edit2 class="w-3.5 h-3.5" />
                     </Button>
@@ -324,10 +336,11 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4">
           {#each filteredLinks as link, i (link.id)}
             <div
-              class="group relative bg-background border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing"
+              class="group relative border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing
+               {link.isPinned ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20' : 'bg-background'}"
               draggable={sortKey === 'manual' && searchQuery === ''}
               ondragstart={(e) => {
-                e.dataTransfer?.setData('text/plain', i.toString());
+                e.dataTransfer?.setData('text/plain', link.id);
                 (e.currentTarget as HTMLElement).classList.add('opacity-50');
               }}
               ondragend={(e) => {
@@ -345,9 +358,9 @@
               ondrop={(e) => {
                 e.preventDefault();
                 (e.currentTarget as HTMLElement).classList.remove('border-primary');
-                const fromIndex = parseInt(e.dataTransfer?.getData('text/plain') || '-1');
-                if (fromIndex !== -1 && fromIndex !== i) {
-                  linkStore.reorder(fromIndex, i);
+                const fromId = e.dataTransfer?.getData('text/plain');
+                if (fromId && fromId !== link.id) {
+                  linkStore.reorder(fromId, link.id);
                 }
               }}
             >
@@ -359,6 +372,13 @@
                   {link.category || 'なし'}
                 </span>
                 <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button class="hover:text-primary {link.isPinned ? 'text-primary' : ''}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
+                     {#if link.isPinned}
+                       <PinOff class="w-3 h-3" />
+                     {:else}
+                       <Pin class="w-3 h-3" />
+                     {/if}
+                   </button>
                    <button class="hover:text-primary" onclick={() => startEdit(link)} title="編集">
                      <Edit2 class="w-3 h-3" />
                    </button>
