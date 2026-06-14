@@ -112,60 +112,12 @@
 
 <main class="p-4 flex flex-col gap-4 h-screen max-w-full">
   <!-- Header -->
-  <div class="flex gap-2 items-end">
-    <div class="flex-[1.5] space-y-1">
-      <label for="name" class="text-xs text-muted-foreground ml-1">名称</label>
-      <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-sm" />
-    </div>
-    <div class="flex-[2] space-y-1">
-      <label for="path" class="text-xs text-muted-foreground ml-1">URL / パス</label>
-      <Input id="path" bind:value={newPath} placeholder="URL または パス" class="h-8 text-sm" />
-    </div>
-    <div class="flex-1 space-y-1">
-      <label for="category" class="text-xs text-muted-foreground ml-1">カテゴリー</label>
-      <Input id="category" bind:value={newCategory} placeholder="任意" class="h-8 text-sm" />
-    </div>
-    <Button onclick={addLink} size="sm" class="h-8">
-      <Plus class="w-4 h-4 mr-1" />
-      追加
-    </Button>
-    <div class="w-px h-8 bg-border mx-1"></div>
-    <div class="flex-[1.2] relative space-y-1">
-      <label for="search" class="text-xs text-muted-foreground ml-1">検索</label>
-      <div class="relative">
-        <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-        <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-sm" />
-      </div>
-    </div>
-    <div class="flex items-end gap-1">
-      <div class="flex flex-col space-y-1">
-        <span class="text-[10px] text-muted-foreground ml-1">並び替え</span>
-        <div class="flex border rounded h-8 overflow-hidden bg-background">
-          <button
-            class="px-2 text-[10px] hover:bg-muted border-r transition-colors {sortKey === 'manual' ? 'bg-primary/10 text-primary font-bold' : ''}"
-            onclick={() => toggleSort('manual')}
-          >
-            カスタム
-          </button>
-          <button
-            class="px-2 text-[10px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
-            onclick={() => toggleSort('name')}
-          >
-            名前 {sortKey === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-          </button>
-          <button
-            class="px-2 text-[10px] hover:bg-muted transition-colors {sortKey === 'category' ? 'bg-primary/10 text-primary font-bold' : ''}"
-            onclick={() => toggleSort('category')}
-          >
-            カテゴリ {sortKey === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-          </button>
-        </div>
-      </div>
-    </div>
-    <div class="flex gap-1">
+  <div class="flex gap-1.5 items-end">
+    <!-- 表示切替ボタン -->
+    <div class="flex gap-0.5 border rounded p-0.5 h-8 items-center bg-muted/20">
       <Button
         variant={$settingsStore.viewMode === 'table' ? 'secondary' : 'ghost'}
-        size="icon" class="h-8 w-8"
+        size="icon" class="h-7 w-7"
         onclick={() => settingsStore.setViewMode('table')}
         title="リスト表示"
       >
@@ -173,15 +125,80 @@
       </Button>
       <Button
         variant={$settingsStore.viewMode === 'grid' ? 'secondary' : 'ghost'}
-        size="icon" class="h-8 w-8"
+        size="icon" class="h-7 w-7"
         onclick={() => settingsStore.setViewMode('grid')}
         title="ボタン表示"
       >
         <LayoutGrid class="w-4 h-4" />
       </Button>
     </div>
-    <Button variant="ghost" size="icon" class="h-8 w-8" onclick={() => showSettings = !showSettings} title="設定">
-      <Settings class="w-4 h-4" />
+
+    <!-- 並び替えボタン -->
+    <div class="flex flex-col space-y-1">
+      <span class="text-[9px] text-muted-foreground ml-1">並び替え</span>
+      <div class="flex border rounded h-8 overflow-hidden bg-background">
+        <button
+          class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'manual' ? 'bg-primary/10 text-primary font-bold' : ''}"
+          onclick={() => toggleSort('manual')}
+        >
+          カスタム
+        </button>
+        <button
+          class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
+          onclick={() => toggleSort('name')}
+        >
+          名前 {sortKey === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+        </button>
+        <button
+          class="px-2 text-[9px] hover:bg-muted transition-colors {sortKey === 'category' ? 'bg-primary/10 text-primary font-bold' : ''}"
+          onclick={() => toggleSort('category')}
+        >
+          カテゴリ {sortKey === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+        </button>
+      </div>
+    </div>
+
+    <!-- 設定ボタン -->
+    <div class="flex flex-col space-y-1">
+       <span class="text-[9px] text-muted-foreground ml-1">設定</span>
+       <Button variant="ghost" size="icon" class="h-8 w-8 border" onclick={() => showSettings = !showSettings} title="設定">
+         <Settings class="w-4 h-4" />
+       </Button>
+    </div>
+
+    <div class="w-px h-8 bg-border mx-0.5"></div>
+
+    <!-- 検索欄 -->
+    <div class="flex-[1] relative space-y-1">
+      <label for="search" class="text-[10px] text-muted-foreground ml-1">検索</label>
+      <div class="relative">
+        <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+        <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-xs" />
+      </div>
+    </div>
+
+    <!-- 名称 -->
+    <div class="flex-[1.2] space-y-1">
+      <label for="name" class="text-[10px] text-muted-foreground ml-1">名称</label>
+      <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-xs" />
+    </div>
+
+    <!-- パス -->
+    <div class="flex-[1.8] space-y-1">
+      <label for="path" class="text-[10px] text-muted-foreground ml-1">URL / パス</label>
+      <Input id="path" bind:value={newPath} placeholder="URL または パス" class="h-8 text-xs" />
+    </div>
+
+    <!-- カテゴリー -->
+    <div class="flex-[0.8] space-y-1">
+      <label for="category" class="text-[10px] text-muted-foreground ml-1">カテゴリー</label>
+      <Input id="category" bind:value={newCategory} placeholder="任意" class="h-8 text-xs" />
+    </div>
+
+    <!-- 追加ボタン -->
+    <Button onclick={addLink} size="sm" class="h-8 px-3">
+      <Plus class="w-4 h-4 mr-1" />
+      追加
     </Button>
   </div>
 
