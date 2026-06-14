@@ -336,6 +336,7 @@
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 p-4">
           {#each filteredLinks as link, i (link.id)}
             <div
+              role="listitem"
               class="group relative border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing
                {link.isPinned ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20' : 'bg-background'}"
               draggable={sortKey === 'manual' && searchQuery === ''}
