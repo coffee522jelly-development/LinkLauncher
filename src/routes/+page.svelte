@@ -317,9 +317,6 @@
                     </Button>
 
                     {#if !isUrl(link.path)}
-                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => revealInExplorer(link.path)} title="場所を表示">
-                        <FolderOpen class="w-3.5 h-3.5" />
-                      </Button>
                       <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => openTerminal(link.path)} title="ターミナル">
                         <Terminal class="w-3.5 h-3.5" />
                       </Button>
@@ -333,6 +330,13 @@
                       {/if}
                       {getAppButtonLabel(link.path)}
                     </Button>
+
+                    {#if !isUrl(link.path)}
+                      <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => revealInExplorer(link.path)} title="フォルダを開く">
+                        <FolderOpen class="w-3 h-3 mr-1" />
+                        フォルダ
+                      </Button>
+                    {/if}
 
                     <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
                       <Trash2 class="w-3.5 h-3.5" />
@@ -421,24 +425,27 @@
                 </div>
               </button>
 
-              <div class="flex items-center gap-1 pt-2 border-t mt-auto opacity-0 group-hover:opacity-100 transition-opacity">
+              <div class="flex items-center gap-1 pt-2 border-t mt-auto opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
                 <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => copyToClipboard(link.path)} title="コピー">
                   <Copy class="w-3 h-3" />
                 </Button>
                 {#if !isUrl(link.path)}
-                  <div class="flex gap-0.5">
-                    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => revealInExplorer(link.path)} title="場所を表示">
-                      <FolderOpen class="w-3 h-3" />
-                    </Button>
-                    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => openTerminal(link.path)} title="ターミナル">
-                      <Terminal class="w-3 h-3" />
-                    </Button>
-                  </div>
+                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => openTerminal(link.path)} title="ターミナル">
+                    <Terminal class="w-3 h-3" />
+                  </Button>
                 {/if}
                 <div class="flex-1"></div>
-                <Button variant="outline" size="sm" class="h-6 px-2 text-[9px]" onclick={() => openPath(link.path)}>
-                  {getAppButtonLabel(link.path)}
-                </Button>
+                <div class="flex gap-1.5 items-center">
+                  <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px]" onclick={() => openPath(link.path)}>
+                    {getAppButtonLabel(link.path)}
+                  </Button>
+                  {#if !isUrl(link.path)}
+                    <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px] bg-primary/5 border-primary/40 font-medium" onclick={() => revealInExplorer(link.path)}>
+                      <FolderOpen class="w-3 h-3 mr-1" />
+                      フォルダ
+                    </Button>
+                  {/if}
+                </div>
               </div>
             </div>
           {:else}
