@@ -393,19 +393,19 @@
                    'bg-primary/10 text-primary'}">
                   {link.category || 'なし'}
                 </span>
-                <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button class="hover:text-primary {link.isPinned ? 'text-primary' : ''}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
+                <div class="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary {link.isPinned ? 'text-primary' : ''}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
                      {#if link.isPinned}
-                       <PinOff class="w-3 h-3" />
+                       <PinOff class="w-3.5 h-3.5" />
                      {:else}
-                       <Pin class="w-3 h-3" />
+                       <Pin class="w-3.5 h-3.5" />
                      {/if}
                    </button>
-                   <button class="hover:text-primary" onclick={() => startEdit(link)} title="編集">
-                     <Edit2 class="w-3 h-3" />
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary" onclick={() => startEdit(link)} title="編集">
+                     <Edit2 class="w-3.5 h-3.5" />
                    </button>
-                   <button class="hover:text-destructive" onclick={() => linkStore.remove(link.id)} title="削除">
-                     <Trash2 class="w-3 h-3" />
+                   <button class="p-1 hover:bg-destructive/10 rounded transition-colors hover:text-destructive" onclick={() => linkStore.remove(link.id)} title="削除">
+                     <Trash2 class="w-3.5 h-3.5" />
                    </button>
                 </div>
               </div>
