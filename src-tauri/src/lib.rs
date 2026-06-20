@@ -1,3 +1,8 @@
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
+    Manager, Runtime,
+};
 use tauri_plugin_opener::OpenerExt;
 
 // ============================================================================
@@ -103,6 +108,47 @@ fn open_terminal(path: &str) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        // --- システムトレイの設定 ---
+        .setup(|app| {
+            // トレイメニューの作成
+            let quit_i = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
+            let show_i = MenuItem::with_id(app, "show", "メイン画面を表示", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
+
+            // トレイアイコンの構築
+            let _tray = TrayIconBuilder::new()
+                .icon(app.default_window_icon().unwrap().clone())
+                .menu(&menu)
+                .on_menu_event(|app, event| match event.id.as_ref() {
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    "show" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                    _ => {}
+                })
+                .on_tray_icon_event(|tray, event| {
+                    if let TrayIconEvent::Click {
+                        button: MouseButton::Left,
+                        button_state: MouseButtonState::Up,
+                        ..
+                    } = event
+                    {
+                        let app = tray.app_handle();
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    }
+                })
+                .build(app)?;
+
+            Ok(())
+        })
         // --- Tauri v2 プラグインのセットアップ ---
         .plugin(tauri_plugin_opener::init())            // ファイルやURLを開くためのプラグイン
         .plugin(tauri_plugin_shell::init())             // シェルコマンド実行用（ターミナル起動で使用）
@@ -121,6 +167,19 @@ pub fn run() {
         ])
 
         // --- アプリケーションの実行 ---
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application")
+        .run(|_app_handle, event| match event {
+            // ウィンドウの「閉じる」ボタンが押された時の挙動をカスタマイズ
+            tauri::RunEvent::WindowEvent { label, event: tauri::WindowEvent::CloseRequested { api, .. }, .. } => {
+                if label == "main" {
+                    // アプリを終了せず、ウィンドウを隠すだけにする（常駐状態の維持）
+                    api.prevent_close();
+                    if let Some(window) = _app_handle.get_webview_window("main") {
+                        let _ = window.hide();
+                    }
+                }
+            }
+            _ => {}
+        });
 }
