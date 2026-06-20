@@ -5,6 +5,7 @@
   import { copyToClipboard, openPath, revealInExplorer, openTerminal } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
+  import ContextMenu from '$lib/components/ContextMenu.svelte';
   import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff } from 'lucide-svelte';
 
   let newName = $state('');
@@ -20,6 +21,9 @@
   let editName = $state('');
   let editCategory = $state('');
   let editPath = $state('');
+
+  // Context Menu state
+  let contextMenu = $state<{ x: number, y: number, link: Link | null }>({ x: 0, y: 0, link: null });
 
   onMount(() => {
     linkStore.load();
@@ -98,6 +102,19 @@
        return isFile ? '開く' : 'フォルダ';
     }
     return '開く';
+  }
+
+  function handleContextMenu(e: MouseEvent, link: Link) {
+    e.preventDefault();
+    contextMenu = {
+      x: e.clientX,
+      y: e.clientY,
+      link
+    };
+  }
+
+  function closeContextMenu() {
+    contextMenu = { x: 0, y: 0, link: null };
   }
 
   const themes: { name: string, value: Theme, color: string }[] = [
@@ -266,7 +283,10 @@
           </thead>
           <tbody class="divide-y">
             {#each filteredLinks as link (link.id)}
-              <tr class="hover:bg-muted/30 transition-colors {link.isPinned ? 'bg-primary/5' : ''}">
+              <tr
+                class="hover:bg-muted/30 transition-colors {link.isPinned ? 'bg-primary/5' : ''}"
+                oncontextmenu={(e) => handleContextMenu(e, link)}
+              >
                 {#if editingId === link.id}
                   <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
                   <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
@@ -358,6 +378,7 @@
           {#each filteredLinks as link, i (link.id)}
             <div
               role="listitem"
+              oncontextmenu={(e) => handleContextMenu(e, link)}
               class="group relative border rounded-lg p-3 hover:border-primary/50 hover:shadow-md transition-all flex flex-col gap-2 cursor-grab active:cursor-grabbing
                {link.isPinned ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20' : 'bg-background'}"
               draggable={sortKey === 'manual' && searchQuery === ''}
@@ -457,6 +478,24 @@
       {/if}
     </div>
   </div>
+
+  {#if contextMenu.link}
+    <ContextMenu
+      x={contextMenu.x}
+      y={contextMenu.y}
+      isPinned={contextMenu.link.isPinned}
+      isUrl={isUrl(contextMenu.link.path)}
+      label={getAppButtonLabel(contextMenu.link.path)}
+      onClose={closeContextMenu}
+      onEdit={() => startEdit(contextMenu.link!)}
+      onDelete={() => linkStore.remove(contextMenu.link!.id)}
+      onOpen={() => openPath(contextMenu.link!.path)}
+      onCopy={() => copyToClipboard(contextMenu.link!.path)}
+      onPin={() => linkStore.togglePin(contextMenu.link!.id)}
+      onReveal={() => revealInExplorer(contextMenu.link!.path)}
+      onTerminal={() => openTerminal(contextMenu.link!.path)}
+    />
+  {/if}
 
   {#if editingId && $settingsStore.viewMode === 'grid'}
     <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
