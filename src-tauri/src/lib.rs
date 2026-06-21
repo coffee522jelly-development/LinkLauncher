@@ -2,7 +2,7 @@ use serde::Deserialize;
 use tauri::{
     menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, Runtime,
+    Manager,
 };
 use tauri_plugin_opener::OpenerExt;
 
@@ -186,8 +186,7 @@ pub fn run() {
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
             // トレイアイコンの構築
-            let _tray = TrayIconBuilder::new()
-                .id("main_tray")
+            let _tray = TrayIconBuilder::with_id("main_tray")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
                 .on_menu_event(|app, event| {
