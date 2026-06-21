@@ -61,6 +61,15 @@ npm run dev
 npm run tauri build
 ```
 
+### アイコンの更新
+
+アイコンのデザインを変更・反映したい場合は、以下のコマンドを実行してください。
+
+```bash
+# SVGアイコンからOS標準の全サイズアイコンを生成
+npm run tauri icon src-tauri/icons/icon.svg
+```
+
 ## トラブルシューティング
 
 ### ビルド時に `os error 4551` が発生する場合
