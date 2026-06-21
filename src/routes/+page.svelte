@@ -26,7 +26,11 @@
   let contextMenu = $state<{ x: number, y: number, link: Link | null }>({ x: 0, y: 0, link: null });
 
   onMount(() => {
-    linkStore.load();
+    linkStore.load().then(() => {
+      // Initialize tray with data
+      copyToClipboard('').catch(() => {}); // Dummy to ensure plugins are ready
+      setTimeout(() => refreshTray(), 1000);
+    });
     settingsStore.load();
   });
 

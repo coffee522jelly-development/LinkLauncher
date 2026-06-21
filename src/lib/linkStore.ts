@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { load } from '@tauri-apps/plugin-store';
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
+import { refreshTray } from './actions';
 
 export interface Link {
   id: string;
@@ -46,6 +47,8 @@ function createLinkStore() {
       const store = await load(STORE_PATH);
       await store.set('links', links);
       await store.save();
+      // Update tray menu whenever links change
+      refreshTray();
     } catch (err) {
       console.error('Failed to persist links:', err);
     }

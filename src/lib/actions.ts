@@ -63,3 +63,11 @@ export async function openTerminal(path: string) {
     await notify('エラー', `コマンドプロンプトを開けませんでした: ${err}`);
   }
 }
+
+export async function refreshTray() {
+  try {
+    await invoke('refresh_tray_menu');
+  } catch (err) {
+    console.error('Failed to refresh tray menu:', err);
+  }
+}

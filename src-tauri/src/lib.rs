@@ -1,5 +1,6 @@
+use serde::Deserialize;
 use tauri::{
-    menu::{Menu, MenuItem},
+    menu::{Menu, MenuItem, PredefinedMenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Manager, Runtime,
 };
@@ -50,6 +51,75 @@ fn reveal_link(app: tauri::AppHandle, path: &str) -> Result<(), String> {
 /// * `path` - 対象のディレクトリ、またはファイルが含まれるフォルダ
 ///
 /// 指定されたディレクトリに移動(`cd`)した状態で新しいターミナルウィンドウを起動します。
+#[derive(Debug, Deserialize)]
+struct LinkItem {
+    name: String,
+    path: String,
+}
+
+#[derive(Debug, Deserialize)]
+struct LinkData {
+    links: Vec<LinkItem>,
+}
+
+/// システムトレイのメニューを更新する
+#[tauri::command]
+fn refresh_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
+    let app_clone = app.clone();
+
+    // 別スレッドでファイル読み込みとメニュー更新を行う
+    std::thread::spawn(move || {
+        let store_path = app_clone
+            .path()
+            .app_data_dir()
+            .unwrap_or_default()
+            .join("links.json");
+
+        let mut tray_links = Vec::new();
+
+        if let Ok(content) = std::fs::read_to_string(store_path) {
+            if let Ok(data) = serde_json::from_str::<LinkData>(&content) {
+                // 最新または重要な5件を抽出（ここでは末尾の5件）
+                tray_links = data.links.into_iter().rev().take(5).collect();
+            }
+        }
+
+        let handle = app_clone.clone();
+
+        // メインスレッドでメニューを再構築
+        let _ = app_clone.run_on_main_thread(move || {
+            if let Some(tray) = handle.tray_by_id("main_tray") {
+                let quit_i = MenuItem::with_id(&handle, "quit", "終了", true, None::<&str>).unwrap();
+                let show_i = MenuItem::with_id(&handle, "show", "メイン画面を表示", true, None::<&str>).unwrap();
+
+                let mut menu_items: Vec<Box<dyn tauri::menu::IsMenuItem<tauri::Wry>>> = Vec::new();
+                menu_items.push(Box::new(show_i));
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+
+                // 動的リンクの追加
+                for link in tray_links {
+                    let item = MenuItem::with_id(
+                        &handle,
+                        format!("link:{}", link.path), // IDにパスを含める
+                        format!("🚀 {}", link.name),
+                        true,
+                        None::<&str>
+                    ).unwrap();
+                    menu_items.push(Box::new(item));
+                }
+
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+                menu_items.push(Box::new(quit_i));
+
+                let menu = Menu::with_items(&handle, &menu_items.iter().map(|b| b.as_ref()).collect::<Vec<_>>()).unwrap();
+                let _ = tray.set_menu(Some(menu));
+            }
+        });
+    });
+
+    Ok(())
+}
+
 #[tauri::command]
 fn open_terminal(path: &str) -> Result<(), String> {
     println!("Rust: Opening terminal at: {}", path);
@@ -110,26 +180,29 @@ pub fn run() {
     tauri::Builder::default()
         // --- システムトレイの設定 ---
         .setup(|app| {
-            // トレイメニューの作成
+            // トレイメニューの作成（初期状態）
             let quit_i = MenuItem::with_id(app, "quit", "終了", true, None::<&str>)?;
             let show_i = MenuItem::with_id(app, "show", "メイン画面を表示", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show_i, &quit_i])?;
 
             // トレイアイコンの構築
             let _tray = TrayIconBuilder::new()
+                .id("main_tray")
                 .icon(app.default_window_icon().unwrap().clone())
                 .menu(&menu)
-                .on_menu_event(|app, event| match event.id.as_ref() {
-                    "quit" => {
+                .on_menu_event(|app, event| {
+                    let id = event.id.as_ref();
+                    if id == "quit" {
                         app.exit(0);
-                    }
-                    "show" => {
+                    } else if id == "show" {
                         if let Some(window) = app.get_webview_window("main") {
                             let _ = window.show();
                             let _ = window.set_focus();
                         }
+                    } else if id.starts_with("link:") {
+                        let path = &id[5..]; // "link:" プレフィックスを削除
+                        let _ = launch_link(app.clone(), path);
                     }
-                    _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
@@ -163,7 +236,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             launch_link,
             reveal_link,
-            open_terminal
+            open_terminal,
+            refresh_tray_menu
         ])
 
         // --- アプリケーションの実行 ---
