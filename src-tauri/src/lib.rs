@@ -55,6 +55,8 @@ fn reveal_link(app: tauri::AppHandle, path: &str) -> Result<(), String> {
 struct LinkItem {
     name: String,
     path: String,
+    #[serde(default)]
+    is_favorite: bool,
 }
 
 #[derive(Debug, Deserialize)]
@@ -79,8 +81,8 @@ fn refresh_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
 
         if let Ok(content) = std::fs::read_to_string(store_path) {
             if let Ok(data) = serde_json::from_str::<LinkData>(&content) {
-                // 最新または重要な5件を抽出（ここでは末尾の5件）
-                tray_links = data.links.into_iter().rev().take(5).collect();
+                // お気に入りに設定されているものを抽出（最大5件）
+                tray_links = data.links.into_iter().filter(|l| l.is_favorite).take(5).collect();
             }
         }
 

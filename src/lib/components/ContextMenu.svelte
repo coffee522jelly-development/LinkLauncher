@@ -1,11 +1,12 @@
 <script lang="ts">
-  import { Edit2, Trash2, Play, Copy, Pin, PinOff, ExternalLink, FolderOpen, Terminal } from 'lucide-svelte';
+  import { Edit2, Trash2, Play, Copy, Pin, PinOff, ExternalLink, FolderOpen, Terminal, Star } from 'lucide-svelte';
   import { onMount } from 'svelte';
 
   interface Props {
     x: number;
     y: number;
     isPinned: boolean;
+    isFavorite: boolean;
     isUrl: boolean;
     label: string;
     onClose: () => void;
@@ -14,13 +15,14 @@
     onOpen: () => void;
     onCopy: () => void;
     onPin: () => void;
+    onFavorite: () => void;
     onReveal?: () => void;
     onTerminal?: () => void;
   }
 
   let {
-    x, y, isPinned, isUrl, label,
-    onClose, onEdit, onDelete, onOpen, onCopy, onPin, onReveal, onTerminal
+    x, y, isPinned, isFavorite, isUrl, label,
+    onClose, onEdit, onDelete, onOpen, onCopy, onPin, onFavorite, onReveal, onTerminal
   }: Props = $props();
 
   let menuElement: HTMLDivElement;
@@ -105,6 +107,14 @@
       <Pin class="w-3.5 h-3.5" />
       ピン留め
     {/if}
+  </button>
+
+  <button
+    class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+    onclick={() => handleAction(onFavorite)}
+  >
+    <Star class="w-3.5 h-3.5 {isFavorite ? 'text-yellow-500 fill-yellow-500' : ''}" />
+    {isFavorite ? 'お気に入り解除' : 'お気に入りに追加'}
   </button>
 
   {#if !isUrl}

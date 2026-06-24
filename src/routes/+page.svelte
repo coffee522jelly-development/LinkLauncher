@@ -6,7 +6,7 @@
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff, Star } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -326,6 +326,9 @@
                     {link.path}
                   </td>
                   <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
+                    <Button variant="ghost" size="icon" class="h-7 w-7 {link.isFavorite ? 'text-yellow-500' : 'text-muted-foreground'}" onclick={() => linkStore.toggleFavorite(link.id)} title={link.isFavorite ? "お気に入り解除" : "お気に入りに追加"}>
+                      <Star class="w-3.5 h-3.5 {link.isFavorite ? 'fill-yellow-500' : ''}" />
+                    </Button>
                     <Button variant="ghost" size="icon" class="h-7 w-7 {link.isPinned ? 'text-primary' : 'text-muted-foreground'}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
                       {#if link.isPinned}
                         <PinOff class="w-3.5 h-3.5" />
@@ -419,6 +422,9 @@
                   {link.category || 'なし'}
                 </span>
                 <div class="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-yellow-500 {link.isFavorite ? 'text-yellow-500' : ''}" onclick={() => linkStore.toggleFavorite(link.id)} title={link.isFavorite ? "お気に入り解除" : "お気に入りに追加"}>
+                     <Star class="w-3.5 h-3.5 {link.isFavorite ? 'fill-yellow-500' : ''}" />
+                   </button>
                    <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary {link.isPinned ? 'text-primary' : ''}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
                      {#if link.isPinned}
                        <PinOff class="w-3.5 h-3.5" />
@@ -487,7 +493,8 @@
     <ContextMenu
       x={contextMenu.x}
       y={contextMenu.y}
-      isPinned={contextMenu.link.isPinned}
+      isPinned={!!contextMenu.link.isPinned}
+      isFavorite={!!contextMenu.link.isFavorite}
       isUrl={isUrl(contextMenu.link.path)}
       label={getAppButtonLabel(contextMenu.link.path)}
       onClose={closeContextMenu}
@@ -496,6 +503,7 @@
       onOpen={() => openPath(contextMenu.link!.path)}
       onCopy={() => copyToClipboard(contextMenu.link!.path)}
       onPin={() => linkStore.togglePin(contextMenu.link!.id)}
+      onFavorite={() => linkStore.toggleFavorite(contextMenu.link!.id)}
       onReveal={() => revealInExplorer(contextMenu.link!.path)}
       onTerminal={() => openTerminal(contextMenu.link!.path)}
     />

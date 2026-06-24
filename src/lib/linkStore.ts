@@ -2,6 +2,7 @@ import { writable, get } from 'svelte/store';
 import { load } from '@tauri-apps/plugin-store';
 import { save, open } from '@tauri-apps/plugin-dialog';
 import { writeTextFile, readTextFile } from '@tauri-apps/plugin-fs';
+import { sendNotification } from '@tauri-apps/plugin-notification';
 import { refreshTray } from './actions';
 
 export interface Link {
@@ -10,6 +11,7 @@ export interface Link {
   path: string;
   category: string;
   isPinned?: boolean;
+  isFavorite?: boolean;
 }
 
 const STORE_PATH = 'links.json';
@@ -79,6 +81,7 @@ function createLinkStore() {
         path,
         category: finalCategory,
         isPinned: false,
+        isFavorite: false,
       };
       update((links) => {
         const updated = [...links, newLink];
@@ -93,6 +96,37 @@ function createLinkStore() {
         persist(updated);
         return updated;
       });
+    },
+
+    toggleFavorite: async (id: string) => {
+      let limitReached = false;
+      update((links) => {
+        const link = links.find(l => l.id === id);
+        if (!link) return links;
+
+        const currentFavoritesCount = links.filter(l => l.isFavorite).length;
+
+        // If turning ON and already at 5
+        if (!link.isFavorite && currentFavoritesCount >= 5) {
+          limitReached = true;
+          return links;
+        }
+
+        const updated = links.map(l => l.id === id ? { ...l, isFavorite: !l.isFavorite } : l);
+        persist(updated);
+        return updated;
+      });
+
+      if (limitReached) {
+        try {
+          sendNotification({
+            title: 'お気に入り上限',
+            body: 'お気に入りは最大5件までです。既存のものを解除してから追加してください。'
+          });
+        } catch (e) {
+          console.error(e);
+        }
+      }
     },
 
   reorder: async (fromId: string, toId: string) => {
@@ -135,9 +169,9 @@ function createLinkStore() {
         });
 
         if (filePath) {
-          const header = '名称,カテゴリー,パス,ピン留め\n';
+          const header = '名称,カテゴリー,パス,ピン留め,お気に入り\n';
           const content = links.map(l =>
-            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}"`
+            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}","${l.isFavorite ? '1' : '0'}"`
           ).join('\n');
           await writeTextFile(filePath, header + content);
         }
@@ -166,7 +200,8 @@ function createLinkStore() {
                 name: parts[0],
                 category: parts[1],
                 path: parts[2] || '',
-                isPinned: parts[3] === '1'
+                isPinned: parts[3] === '1',
+                isFavorite: parts[4] === '1'
               });
             }
           }
