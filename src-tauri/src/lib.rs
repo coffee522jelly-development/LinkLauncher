@@ -55,7 +55,7 @@ fn reveal_link(app: tauri::AppHandle, path: &str) -> Result<(), String> {
 struct LinkItem {
     name: String,
     path: String,
-    #[serde(default)]
+    #[serde(default, rename = "isFavorite")]
     is_favorite: bool,
 }
 
