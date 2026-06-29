@@ -2,7 +2,7 @@
   import { onMount } from 'svelte';
   import { linkStore, type Link } from '$lib/linkStore';
   import { settingsStore, type Theme, type ViewMode } from '$lib/settingsStore';
-  import { copyToClipboard, openPath, revealInExplorer, openTerminal } from '$lib/actions';
+  import { copyToClipboard, openPath, revealInExplorer, openTerminal, refreshTray } from '$lib/actions';
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
@@ -25,6 +25,9 @@
   // Context Menu state
   let contextMenu = $state<{ x: number, y: number, link: Link | null }>({ x: 0, y: 0, link: null });
 
+  // Input references
+  let searchInputRef = $state<HTMLInputElement>();
+
   onMount(() => {
     linkStore.load().then(() => {
       // Initialize tray with data
@@ -32,6 +35,18 @@
       setTimeout(() => refreshTray(), 1000);
     });
     settingsStore.load();
+
+    const handleGlobalKeydown = (e: KeyboardEvent) => {
+      // Ctrl + F or Cmd + F
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        searchInputRef?.focus();
+        searchInputRef?.select();
+      }
+    };
+
+    window.addEventListener('keydown', handleGlobalKeydown);
+    return () => window.removeEventListener('keydown', handleGlobalKeydown);
   });
 
   const filteredLinks = $derived(
@@ -191,10 +206,10 @@
 
     <!-- 検索欄 -->
     <div class="flex-[1] relative space-y-1">
-      <label for="search" class="text-[10px] text-muted-foreground ml-1">検索</label>
+      <label for="search" class="text-[10px] text-muted-foreground ml-1">検索 (Ctrl+F)</label>
       <div class="relative">
         <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-        <Input id="search" bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-xs" />
+        <Input id="search" bind:ref={searchInputRef} bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-xs" />
       </div>
     </div>
 
