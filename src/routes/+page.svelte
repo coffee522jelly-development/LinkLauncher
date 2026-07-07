@@ -37,8 +37,10 @@
     settingsStore.load();
 
     const handleGlobalKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta' || e.key === 'Shift' || e.key === 'Alt') return;
+
       // Ctrl + F or Cmd + F
-      if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyF' || e.key === 'f' || e.key === 'F') && !e.shiftKey && !e.altKey && !e.isComposing) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey && !e.isComposing) {
         e.preventDefault();
         searchInputRef?.focus();
         searchInputRef?.select();
