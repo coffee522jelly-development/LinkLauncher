@@ -106,8 +106,8 @@ function createLinkStore() {
 
         const currentFavoritesCount = links.filter(l => l.isFavorite).length;
 
-        // If turning ON and already at 5
-        if (!link.isFavorite && currentFavoritesCount >= 5) {
+        // If turning ON and already at 10
+        if (!link.isFavorite && currentFavoritesCount >= 10) {
           limitReached = true;
           return links;
         }
@@ -121,7 +121,7 @@ function createLinkStore() {
         try {
           sendNotification({
             title: 'お気に入り上限',
-            body: 'お気に入りは最大5件までです。既存のものを解除してから追加してください。'
+            body: 'お気に入りは最大10件までです。既存のものを解除してから追加してください。'
           });
         } catch (e) {
           console.error(e);
