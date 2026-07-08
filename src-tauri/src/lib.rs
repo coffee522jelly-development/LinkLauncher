@@ -5,6 +5,7 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
 // ============================================================================
 // Tauriコマンド定義: フロントエンド(Svelte)から呼び出されるRust関数
@@ -250,6 +251,7 @@ pub fn run() {
                 if label == "main" {
                     // アプリを終了せず、ウィンドウを隠すだけにする（常駐状態の維持）
                     api.prevent_close();
+                    let _ = _app_handle.save_window_state(StateFlags::all());
                     if let Some(window) = _app_handle.get_webview_window("main") {
                         let _ = window.hide();
                     }
