@@ -40,7 +40,11 @@
       if (e.key === 'Control' || e.key === 'Meta' || e.key === 'Shift' || e.key === 'Alt') return;
 
       // Ctrl + F or Cmd + F
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey && !e.isComposing) {
+      // Require strictly 'f' key or KeyF code, and prevent execution on shortcuts like Ctrl+C
+      if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyF' || e.key.toLowerCase() === 'f') && !e.shiftKey && !e.altKey && !e.isComposing) {
+        // Double check it's definitely 'f' or 'KeyF' to avoid false positives in some browsers/IMEs
+        if (e.key.toLowerCase() !== 'f' && e.code !== 'KeyF') return;
+
         e.preventDefault();
         searchInputRef?.focus();
         searchInputRef?.select();
