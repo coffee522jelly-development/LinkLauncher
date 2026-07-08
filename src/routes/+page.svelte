@@ -31,7 +31,6 @@
   onMount(() => {
     linkStore.load().then(() => {
       // Initialize tray with data
-      copyToClipboard('').catch(() => {}); // Dummy to ensure plugins are ready
       setTimeout(() => refreshTray(), 1000);
     });
     settingsStore.load();
