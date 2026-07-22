@@ -1,0 +1,120 @@
+<<<<<<< SEARCH
+export interface Link {
+  id: string;
+  name: string;
+  path: string;
+  category: string;
+  isPinned?: boolean;
+  isFavorite?: boolean;
+}
+=======
+export interface Link {
+  id: string;
+  name: string;
+  path: string;
+  category: string;
+  isPinned?: boolean;
+  isFavorite?: boolean;
+  isGroup?: boolean;
+  linkIds?: string[];
+}
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+    add: async (name: string, path: string, category: string = '') => {
+      let finalCategory = category;
+      if (!finalCategory) {
+        finalCategory = path.startsWith('http') ? 'Web' : 'Local';
+      }
+
+      const newLink: Link = {
+        id: crypto.randomUUID(),
+        name,
+        path,
+        category: finalCategory,
+        isPinned: false,
+        isFavorite: false,
+      };
+      update((links) => {
+        const updated = [...links, newLink];
+        persist(updated);
+        return updated;
+      });
+    },
+
+    togglePin: async (id: string) => {
+=======
+    add: async (name: string, path: string, category: string = '') => {
+      let finalCategory = category;
+      if (!finalCategory) {
+        finalCategory = path.startsWith('http') ? 'Web' : 'Local';
+      }
+
+      const newLink: Link = {
+        id: crypto.randomUUID(),
+        name,
+        path,
+        category: finalCategory,
+        isPinned: false,
+        isFavorite: false,
+        isGroup: false,
+        linkIds: [],
+      };
+      update((links) => {
+        const updated = [...links, newLink];
+        persist(updated);
+        return updated;
+      });
+    },
+
+    addGroup: async (name: string, category: string = '', linkIds: string[]) => {
+      const newGroup: Link = {
+        id: crypto.randomUUID(),
+        name,
+        path: '', // Groups don't have a direct path
+        category: category || 'Group',
+        isPinned: false,
+        isFavorite: false,
+        isGroup: true,
+        linkIds,
+      };
+      update((links) => {
+        const updated = [...links, newGroup];
+        persist(updated);
+        return updated;
+      });
+    },
+
+    togglePin: async (id: string) => {
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+          const header = '名称,カテゴリー,パス,ピン留め,お気に入り\n';
+          const content = links.map(l =>
+            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}","${l.isFavorite ? '1' : '0'}"`
+          ).join('\n');
+=======
+          const header = '名称,カテゴリー,パス,ピン留め,お気に入り,グループフラグ,リンクIDリスト\n';
+          const content = links.map(l =>
+            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}","${l.isFavorite ? '1' : '0'}","${l.isGroup ? '1' : '0'}","${(l.linkIds || []).join(';').replace(/"/g, '""')}"`
+          ).join('\n');
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+              importedLinks.push({
+                id: crypto.randomUUID(),
+                name: parts[0],
+                category: parts[1],
+                path: parts[2] || '',
+                isPinned: parts[3] === '1',
+                isFavorite: parts[4] === '1'
+              });
+=======
+              importedLinks.push({
+                id: crypto.randomUUID(),
+                name: parts[0],
+                category: parts[1],
+                path: parts[2] || '',
+                isPinned: parts[3] === '1',
+                isFavorite: parts[4] === '1',
+                isGroup: parts[5] === '1',
+                linkIds: parts[6] ? parts[6].split(';') : []
+              });
+>>>>>>> REPLACE

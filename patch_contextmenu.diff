@@ -1,0 +1,132 @@
+<<<<<<< SEARCH
+  interface Props {
+    x: number;
+    y: number;
+    isPinned: boolean;
+    isFavorite: boolean;
+    isUrl: boolean;
+    label: string;
+    onClose: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+    onOpen: () => void;
+    onCopy: () => void;
+    onPin: () => void;
+    onFavorite: () => void;
+    onReveal?: () => void;
+    onTerminal?: () => void;
+  }
+
+  let {
+    x, y, isPinned, isFavorite, isUrl, label,
+    onClose, onEdit, onDelete, onOpen, onCopy, onPin, onFavorite, onReveal, onTerminal
+  }: Props = $props();
+=======
+  interface Props {
+    x: number;
+    y: number;
+    isPinned: boolean;
+    isFavorite: boolean;
+    isUrl: boolean;
+    isGroup?: boolean;
+    label: string;
+    onClose: () => void;
+    onEdit: () => void;
+    onDelete: () => void;
+    onOpen: () => void;
+    onCopy: () => void;
+    onPin: () => void;
+    onFavorite: () => void;
+    onReveal?: () => void;
+    onTerminal?: () => void;
+  }
+
+  let {
+    x, y, isPinned, isFavorite, isUrl, isGroup = false, label,
+    onClose, onEdit, onDelete, onOpen, onCopy, onPin, onFavorite, onReveal, onTerminal
+  }: Props = $props();
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  <button
+    class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors font-medium"
+    onclick={() => handleAction(onOpen)}
+  >
+    {#if isUrl}
+      <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
+    {:else}
+      <Play class="w-3.5 h-3.5 text-primary" />
+    {/if}
+    {label}
+  </button>
+
+  <button
+    class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+    onclick={() => handleAction(onCopy)}
+  >
+    <Copy class="w-3.5 h-3.5" />
+    パスをコピー
+  </button>
+=======
+  <button
+    class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors font-medium"
+    onclick={() => handleAction(onOpen)}
+  >
+    {#if isUrl}
+      <ExternalLink class="w-3.5 h-3.5 text-blue-500" />
+    {:else}
+      <Play class="w-3.5 h-3.5 text-primary" />
+    {/if}
+    {label}
+  </button>
+
+  {#if !isGroup}
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onCopy)}
+    >
+      <Copy class="w-3.5 h-3.5" />
+      パスをコピー
+    </button>
+  {/if}
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+  {#if !isUrl}
+    <div class="h-px bg-border my-1"></div>
+
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onReveal!)}
+    >
+      <FolderOpen class="w-3.5 h-3.5" />
+      フォルダを開く
+    </button>
+
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onTerminal!)}
+    >
+      <Terminal class="w-3.5 h-3.5" />
+      ターミナルを開く
+    </button>
+  {/if}
+=======
+  {#if !isUrl && !isGroup}
+    <div class="h-px bg-border my-1"></div>
+
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onReveal!)}
+    >
+      <FolderOpen class="w-3.5 h-3.5" />
+      フォルダを開く
+    </button>
+
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onTerminal!)}
+    >
+      <Terminal class="w-3.5 h-3.5" />
+      ターミナルを開く
+    </button>
+  {/if}
+>>>>>>> REPLACE
