@@ -1,0 +1,69 @@
+<<<<<<< SEARCH
+        if (filePath) {
+          const header = '名称,カテゴリー,パス,ピン留め,お気に入り,グループフラグ,リンクIDリスト\n';
+          const content = links.map(l =>
+            `"${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}","${l.isFavorite ? '1' : '0'}","${l.isGroup ? '1' : '0'}","${(l.linkIds || []).join(';').replace(/"/g, '""')}"`
+          ).join('\n');
+          await writeTextFile(filePath, header + content);
+        }
+=======
+        if (filePath) {
+          const header = 'ID,名称,カテゴリー,パス,ピン留め,お気に入り,グループフラグ,リンクIDリスト\n';
+          const content = links.map(l =>
+            `"${l.id}","${l.name.replace(/"/g, '""')}","${l.category.replace(/"/g, '""')}","${l.path.replace(/"/g, '""')}","${l.isPinned ? '1' : '0'}","${l.isFavorite ? '1' : '0'}","${l.isGroup ? '1' : '0'}","${(l.linkIds || []).join(';').replace(/"/g, '""')}"`
+          ).join('\n');
+          await writeTextFile(filePath, header + content);
+        }
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+          const importedLinks: Link[] = [];
+          for (const line of dataLines) {
+            const parts = parseCSVLine(line);
+            if (parts && parts.length >= 2) {
+              importedLinks.push({
+                id: crypto.randomUUID(),
+                name: parts[0],
+                category: parts[1],
+                path: parts[2] || '',
+                isPinned: parts[3] === '1',
+                isFavorite: parts[4] === '1',
+                isGroup: parts[5] === '1',
+                linkIds: parts[6] ? parts[6].split(';') : []
+              });
+            }
+          }
+=======
+          const importedLinks: Link[] = [];
+          for (const line of dataLines) {
+            const parts = parseCSVLine(line);
+            if (parts && parts.length >= 2) {
+              // Legacy CSV formats (without ID) have 5 or 7 columns
+              // New CSV format (with ID) has 8 columns
+              const hasId = parts.length >= 8 && parts[0].length > 20;
+
+              if (hasId) {
+                importedLinks.push({
+                  id: parts[0],
+                  name: parts[1],
+                  category: parts[2],
+                  path: parts[3] || '',
+                  isPinned: parts[4] === '1',
+                  isFavorite: parts[5] === '1',
+                  isGroup: parts[6] === '1',
+                  linkIds: parts[7] ? parts[7].split(';') : []
+                });
+              } else {
+                importedLinks.push({
+                  id: crypto.randomUUID(),
+                  name: parts[0],
+                  category: parts[1],
+                  path: parts[2] || '',
+                  isPinned: parts[3] === '1',
+                  isFavorite: parts[4] === '1',
+                  isGroup: parts[5] === '1',
+                  linkIds: parts[6] ? parts[6].split(';') : []
+                });
+              }
+            }
+          }
+>>>>>>> REPLACE

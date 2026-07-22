@@ -1,0 +1,130 @@
+<<<<<<< SEARCH
+#[derive(Debug, Deserialize)]
+struct LinkItem {
+    name: String,
+    path: String,
+    #[serde(default, rename = "isFavorite")]
+    is_favorite: bool,
+}
+=======
+#[derive(Debug, Deserialize)]
+struct LinkItem {
+    #[serde(default)]
+    id: String,
+    name: String,
+    path: String,
+    #[serde(default, rename = "isFavorite")]
+    is_favorite: bool,
+    #[serde(default, rename = "isGroup")]
+    is_group: bool,
+    #[serde(default, rename = "linkIds")]
+    link_ids: Vec<String>,
+}
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+        let handle = app_clone.clone();
+
+        // メインスレッドでメニューを再構築
+        let _ = app_clone.run_on_main_thread(move || {
+            if let Some(tray) = handle.tray_by_id("main_tray") {
+                let quit_i = MenuItem::with_id(&handle, "quit", "終了", true, None::<&str>).unwrap();
+                let show_i = MenuItem::with_id(&handle, "show", "メイン画面を表示", true, None::<&str>).unwrap();
+
+                let mut menu_items: Vec<Box<dyn tauri::menu::IsMenuItem<tauri::Wry>>> = Vec::new();
+                menu_items.push(Box::new(show_i));
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+
+                // 動的リンクの追加
+                for link in tray_links {
+                    let item = MenuItem::with_id(
+                        &handle,
+                        format!("link:{}", link.path), // IDにパスを含める
+                        link.name.clone(),
+                        true,
+                        None::<&str>
+                    ).unwrap();
+                    menu_items.push(Box::new(item));
+                }
+
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+                menu_items.push(Box::new(quit_i));
+=======
+        let handle = app_clone.clone();
+
+        // メインスレッドでメニューを再構築
+        let _ = app_clone.run_on_main_thread(move || {
+            if let Some(tray) = handle.tray_by_id("main_tray") {
+                let quit_i = MenuItem::with_id(&handle, "quit", "終了", true, None::<&str>).unwrap();
+                let show_i = MenuItem::with_id(&handle, "show", "メイン画面を表示", true, None::<&str>).unwrap();
+
+                let mut menu_items: Vec<Box<dyn tauri::menu::IsMenuItem<tauri::Wry>>> = Vec::new();
+                menu_items.push(Box::new(show_i));
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+
+                // 動的リンクの追加
+                for link in tray_links {
+                    let id_str = if link.is_group {
+                        format!("group:{}", link.id)
+                    } else {
+                        format!("link:{}", link.path)
+                    };
+
+                    let item = MenuItem::with_id(
+                        &handle,
+                        id_str,
+                        link.name.clone(),
+                        true,
+                        None::<&str>
+                    ).unwrap();
+                    menu_items.push(Box::new(item));
+                }
+
+                menu_items.push(Box::new(PredefinedMenuItem::separator(&handle).unwrap()));
+                menu_items.push(Box::new(quit_i));
+>>>>>>> REPLACE
+<<<<<<< SEARCH
+                .on_menu_event(|app, event| {
+                    let id = event.id.as_ref();
+                    if id == "quit" {
+                        app.exit(0);
+                    } else if id == "show" {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    } else if id.starts_with("link:") {
+                        let path = &id[5..]; // "link:" プレフィックスを削除
+                        let _ = launch_link(app.clone(), path);
+                    }
+                })
+=======
+                .on_menu_event(|app, event| {
+                    let id = event.id.as_ref();
+                    if id == "quit" {
+                        app.exit(0);
+                    } else if id == "show" {
+                        if let Some(window) = app.get_webview_window("main") {
+                            let _ = window.show();
+                            let _ = window.set_focus();
+                        }
+                    } else if id.starts_with("link:") {
+                        let path = &id[5..]; // "link:" プレフィックスを削除
+                        let _ = launch_link(app.clone(), path);
+                    } else if id.starts_with("group:") {
+                        let group_id = &id[6..]; // "group:" プレフィックスを削除
+
+                        let store_path = app.path().app_data_dir().unwrap_or_default().join("links.json");
+                        if let Ok(content) = std::fs::read_to_string(store_path) {
+                            if let Ok(data) = serde_json::from_str::<LinkData>(&content) {
+                                if let Some(group) = data.links.iter().find(|l| l.id == group_id && l.is_group) {
+                                    for target_id in &group.link_ids {
+                                        if let Some(target_link) = data.links.iter().find(|l| l.id == *target_id && !l.is_group) {
+                                            let _ = launch_link(app.clone(), &target_link.path);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                })
+>>>>>>> REPLACE
