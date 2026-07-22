@@ -31,14 +31,19 @@
   onMount(() => {
     linkStore.load().then(() => {
       // Initialize tray with data
-      copyToClipboard('').catch(() => {}); // Dummy to ensure plugins are ready
       setTimeout(() => refreshTray(), 1000);
     });
     settingsStore.load();
 
     const handleGlobalKeydown = (e: KeyboardEvent) => {
+      if (e.key === 'Control' || e.key === 'Meta' || e.key === 'Shift' || e.key === 'Alt') return;
+
       // Ctrl + F or Cmd + F
-      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      // Require strictly 'f' key or KeyF code, and prevent execution on shortcuts like Ctrl+C
+      if ((e.ctrlKey || e.metaKey) && (e.code === 'KeyF' || e.key.toLowerCase() === 'f') && !e.shiftKey && !e.altKey && !e.isComposing) {
+        // Double check it's definitely 'f' or 'KeyF' to avoid false positives in some browsers/IMEs
+        if (e.key.toLowerCase() !== 'f' && e.code !== 'KeyF') return;
+
         e.preventDefault();
         searchInputRef?.focus();
         searchInputRef?.select();
@@ -148,94 +153,100 @@
 
 <main class="p-4 flex flex-col gap-4 h-screen max-w-full">
   <!-- Header -->
-  <div class="flex gap-1.5 items-end">
-    <!-- 表示切替ボタン -->
-    <div class="flex gap-0.5 border rounded p-0.5 h-8 items-center bg-muted/20">
-      <Button
-        variant={$settingsStore.viewMode === 'table' ? 'secondary' : 'ghost'}
-        size="icon" class="h-7 w-7"
-        onclick={() => settingsStore.setViewMode('table')}
-        title="リスト表示"
-      >
-        <LayoutList class="w-4 h-4" />
-      </Button>
-      <Button
-        variant={$settingsStore.viewMode === 'grid' ? 'secondary' : 'ghost'}
-        size="icon" class="h-7 w-7"
-        onclick={() => settingsStore.setViewMode('grid')}
-        title="ボタン表示"
-      >
-        <LayoutGrid class="w-4 h-4" />
-      </Button>
-    </div>
+  <div class="flex flex-col gap-2">
+    <!-- Row 1 -->
+    <div class="flex gap-1.5 items-end">
+      <!-- 表示切替ボタン -->
+      <div class="flex gap-0.5 border rounded p-0.5 h-8 items-center bg-muted/20">
+        <Button
+          variant={$settingsStore.viewMode === 'table' ? 'secondary' : 'ghost'}
+          size="icon" class="h-7 w-7"
+          onclick={() => settingsStore.setViewMode('table')}
+          title="リスト表示"
+        >
+          <LayoutList class="w-4 h-4" />
+        </Button>
+        <Button
+          variant={$settingsStore.viewMode === 'grid' ? 'secondary' : 'ghost'}
+          size="icon" class="h-7 w-7"
+          onclick={() => settingsStore.setViewMode('grid')}
+          title="ボタン表示"
+        >
+          <LayoutGrid class="w-4 h-4" />
+        </Button>
+      </div>
 
-    <!-- 並び替えボタン -->
-    <div class="flex flex-col space-y-1">
-      <span class="text-[9px] text-muted-foreground ml-1">並び替え</span>
-      <div class="flex border rounded h-8 overflow-hidden bg-background">
-        <button
-          class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'manual' ? 'bg-primary/10 text-primary font-bold' : ''}"
-          onclick={() => toggleSort('manual')}
-        >
-          カスタム
-        </button>
-        <button
-          class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
-          onclick={() => toggleSort('name')}
-        >
-          名前 {sortKey === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-        </button>
-        <button
-          class="px-2 text-[9px] hover:bg-muted transition-colors {sortKey === 'category' ? 'bg-primary/10 text-primary font-bold' : ''}"
-          onclick={() => toggleSort('category')}
-        >
-          カテゴリ {sortKey === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
-        </button>
+      <!-- 並び替えボタン -->
+      <div class="flex flex-col space-y-1">
+        <span class="text-[9px] text-muted-foreground ml-1">並び替え</span>
+        <div class="flex border rounded h-8 overflow-hidden bg-background">
+          <button
+            class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'manual' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('manual')}
+          >
+            カスタム
+          </button>
+          <button
+            class="px-2 text-[9px] hover:bg-muted border-r transition-colors {sortKey === 'name' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('name')}
+          >
+            名前 {sortKey === 'name' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+          </button>
+          <button
+            class="px-2 text-[9px] hover:bg-muted transition-colors {sortKey === 'category' ? 'bg-primary/10 text-primary font-bold' : ''}"
+            onclick={() => toggleSort('category')}
+          >
+            カテゴリ {sortKey === 'category' ? (sortOrder === 'asc' ? '↑' : '↓') : ''}
+          </button>
+        </div>
+      </div>
+
+      <!-- 設定ボタン -->
+      <div class="flex flex-col space-y-1">
+         <span class="text-[9px] text-muted-foreground ml-1">設定</span>
+         <Button variant="ghost" size="icon" class="h-8 w-8 border" onclick={() => showSettings = !showSettings} title="設定">
+           <Settings class="w-4 h-4" />
+         </Button>
+      </div>
+
+      <div class="w-px h-8 bg-border mx-0.5"></div>
+
+      <!-- 検索欄 -->
+      <div class="flex-[1] relative space-y-1">
+        <label for="search" class="text-[10px] text-muted-foreground ml-1">検索 (Ctrl+F)</label>
+        <div class="relative">
+          <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
+          <Input id="search" bind:ref={searchInputRef} bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-xs" />
+        </div>
+      </div>
+
+      <!-- 名称 -->
+      <div class="flex-[1.5] space-y-1">
+        <label for="name" class="text-[10px] text-muted-foreground ml-1">名称</label>
+        <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-xs" />
+      </div>
+
+      <!-- カテゴリー -->
+      <div class="flex-[1] space-y-1">
+        <label for="category" class="text-[10px] text-muted-foreground ml-1">カテゴリー</label>
+        <Input id="category" bind:value={newCategory} placeholder="任意" class="h-8 text-xs" />
       </div>
     </div>
 
-    <!-- 設定ボタン -->
-    <div class="flex flex-col space-y-1">
-       <span class="text-[9px] text-muted-foreground ml-1">設定</span>
-       <Button variant="ghost" size="icon" class="h-8 w-8 border" onclick={() => showSettings = !showSettings} title="設定">
-         <Settings class="w-4 h-4" />
-       </Button>
-    </div>
-
-    <div class="w-px h-8 bg-border mx-0.5"></div>
-
-    <!-- 検索欄 -->
-    <div class="flex-[1] relative space-y-1">
-      <label for="search" class="text-[10px] text-muted-foreground ml-1">検索 (Ctrl+F)</label>
-      <div class="relative">
-        <Search class="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-muted-foreground" />
-        <Input id="search" bind:ref={searchInputRef} bind:value={searchQuery} placeholder="検索..." class="pl-7 h-8 text-xs" />
+    <!-- Row 2 -->
+    <div class="flex gap-1.5 items-end">
+      <!-- パス -->
+      <div class="flex-1 space-y-1">
+        <label for="path" class="text-[10px] text-muted-foreground ml-1">URL / パス</label>
+        <Input id="path" bind:value={newPath} placeholder="URL または パス" class="h-8 text-xs" />
       </div>
-    </div>
 
-    <!-- 名称 -->
-    <div class="flex-[1.2] space-y-1">
-      <label for="name" class="text-[10px] text-muted-foreground ml-1">名称</label>
-      <Input id="name" bind:value={newName} placeholder="名称" class="h-8 text-xs" />
+      <!-- 追加ボタン -->
+      <Button onclick={addLink} size="sm" class="h-8 px-5">
+        <Plus class="w-4 h-4 mr-1" />
+        追加
+      </Button>
     </div>
-
-    <!-- パス -->
-    <div class="flex-[1.8] space-y-1">
-      <label for="path" class="text-[10px] text-muted-foreground ml-1">URL / パス</label>
-      <Input id="path" bind:value={newPath} placeholder="URL または パス" class="h-8 text-xs" />
-    </div>
-
-    <!-- カテゴリー -->
-    <div class="flex-[0.8] space-y-1">
-      <label for="category" class="text-[10px] text-muted-foreground ml-1">カテゴリー</label>
-      <Input id="category" bind:value={newCategory} placeholder="任意" class="h-8 text-xs" />
-    </div>
-
-    <!-- 追加ボタン -->
-    <Button onclick={addLink} size="sm" class="h-8 px-3">
-      <Plus class="w-4 h-4 mr-1" />
-      追加
-    </Button>
   </div>
 
   {#if showSettings}
@@ -436,21 +447,21 @@
                    'bg-primary/10 text-primary'}">
                   {link.category || 'なし'}
                 </span>
-                <div class="flex gap-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-yellow-500 {link.isFavorite ? 'text-yellow-500' : ''}" onclick={() => linkStore.toggleFavorite(link.id)} title={link.isFavorite ? "お気に入り解除" : "お気に入りに追加"}>
+                <div class="flex gap-2.5 transition-opacity">
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-yellow-500 {link.isFavorite ? 'text-yellow-500 opacity-100' : 'opacity-0 group-hover:opacity-100'}" onclick={() => linkStore.toggleFavorite(link.id)} title={link.isFavorite ? "お気に入り解除" : "お気に入りに追加"}>
                      <Star class="w-3.5 h-3.5 {link.isFavorite ? 'fill-yellow-500' : ''}" />
                    </button>
-                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary {link.isPinned ? 'text-primary' : ''}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary {link.isPinned ? 'text-primary opacity-100' : 'opacity-0 group-hover:opacity-100'}" onclick={() => linkStore.togglePin(link.id)} title={link.isPinned ? "ピン留め解除" : "ピン留め"}>
                      {#if link.isPinned}
                        <PinOff class="w-3.5 h-3.5" />
                      {:else}
                        <Pin class="w-3.5 h-3.5" />
                      {/if}
                    </button>
-                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary" onclick={() => startEdit(link)} title="編集">
+                   <button class="p-1 hover:bg-muted rounded transition-colors hover:text-primary opacity-0 group-hover:opacity-100" onclick={() => startEdit(link)} title="編集">
                      <Edit2 class="w-3.5 h-3.5" />
                    </button>
-                   <button class="p-1 hover:bg-destructive/10 rounded transition-colors hover:text-destructive" onclick={() => linkStore.remove(link.id)} title="削除">
+                   <button class="p-1 hover:bg-destructive/10 rounded transition-colors hover:text-destructive opacity-0 group-hover:opacity-100" onclick={() => linkStore.remove(link.id)} title="削除">
                      <Trash2 class="w-3.5 h-3.5" />
                    </button>
                 </div>

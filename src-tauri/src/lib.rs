@@ -5,6 +5,7 @@ use tauri::{
     Manager,
 };
 use tauri_plugin_opener::OpenerExt;
+use tauri_plugin_window_state::{AppHandleExt, StateFlags};
 
 // ============================================================================
 // Tauriコマンド定義: フロントエンド(Svelte)から呼び出されるRust関数
@@ -81,8 +82,8 @@ fn refresh_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
 
         if let Ok(content) = std::fs::read_to_string(store_path) {
             if let Ok(data) = serde_json::from_str::<LinkData>(&content) {
-                // お気に入りに設定されているものを抽出（最大5件）
-                tray_links = data.links.into_iter().filter(|l| l.is_favorite).take(5).collect();
+                // お気に入りに設定されているものを抽出（最大10件）
+                tray_links = data.links.into_iter().filter(|l| l.is_favorite).take(10).collect();
             }
         }
 
@@ -103,7 +104,7 @@ fn refresh_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
                     let item = MenuItem::with_id(
                         &handle,
                         format!("link:{}", link.path), // IDにパスを含める
-                        format!("🚀 {}", link.name),
+                        link.name.clone(),
                         true,
                         None::<&str>
                     ).unwrap();
@@ -250,6 +251,7 @@ pub fn run() {
                 if label == "main" {
                     // アプリを終了せず、ウィンドウを隠すだけにする（常駐状態の維持）
                     api.prevent_close();
+                    let _ = _app_handle.save_window_state(StateFlags::all());
                     if let Some(window) = _app_handle.get_webview_window("main") {
                         let _ = window.hide();
                     }
