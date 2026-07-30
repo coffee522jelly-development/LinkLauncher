@@ -54,10 +54,16 @@ fn reveal_link(app: tauri::AppHandle, path: &str) -> Result<(), String> {
 /// 指定されたディレクトリに移動(`cd`)した状態で新しいターミナルウィンドウを起動します。
 #[derive(Debug, Deserialize)]
 struct LinkItem {
+    #[serde(default)]
+    id: String,
     name: String,
     path: String,
     #[serde(default, rename = "isFavorite")]
     is_favorite: bool,
+    #[serde(default, rename = "isGroup")]
+    is_group: bool,
+    #[serde(default, rename = "linkIds")]
+    link_ids: Vec<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -101,9 +107,15 @@ fn refresh_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
 
                 // 動的リンクの追加
                 for link in tray_links {
+                    let id_str = if link.is_group {
+                        format!("group:{}", link.id)
+                    } else {
+                        format!("link:{}", link.path)
+                    };
+
                     let item = MenuItem::with_id(
                         &handle,
-                        format!("link:{}", link.path), // IDにパスを含める
+                        id_str,
                         link.name.clone(),
                         true,
                         None::<&str>
@@ -204,6 +216,21 @@ pub fn run() {
                     } else if id.starts_with("link:") {
                         let path = &id[5..]; // "link:" プレフィックスを削除
                         let _ = launch_link(app.clone(), path);
+                    } else if id.starts_with("group:") {
+                        let group_id = &id[6..]; // "group:" プレフィックスを削除
+
+                        let store_path = app.path().app_data_dir().unwrap_or_default().join("links.json");
+                        if let Ok(content) = std::fs::read_to_string(store_path) {
+                            if let Ok(data) = serde_json::from_str::<LinkData>(&content) {
+                                if let Some(group) = data.links.iter().find(|l| l.id == group_id && l.is_group) {
+                                    for target_id in &group.link_ids {
+                                        if let Some(target_link) = data.links.iter().find(|l| l.id == *target_id && !l.is_group) {
+                                            let _ = launch_link(app.clone(), &target_link.path);
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 })
                 .on_tray_icon_event(|tray, event| {

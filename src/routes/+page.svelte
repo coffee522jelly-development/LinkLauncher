@@ -6,7 +6,7 @@
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff, Star } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff, Star, Layers, ListChecks } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -21,6 +21,12 @@
   let editName = $state('');
   let editCategory = $state('');
   let editPath = $state('');
+
+  // Group Modal state
+  let showGroupModal = $state(false);
+  let groupName = $state('');
+  let groupCategory = $state('');
+  let selectedLinkIds = $state<Set<string>>(new Set());
 
   // Context Menu state
   let contextMenu = $state<{ x: number, y: number, link: Link | null }>({ x: 0, y: 0, link: null });
@@ -83,6 +89,25 @@
     }
   }
 
+  async function addGroup() {
+    if (groupName && selectedLinkIds.size > 0) {
+      await linkStore.addGroup(groupName, groupCategory, Array.from(selectedLinkIds));
+      groupName = '';
+      groupCategory = '';
+      selectedLinkIds.clear();
+      showGroupModal = false;
+    }
+  }
+
+  function toggleLinkSelection(id: string) {
+    if (selectedLinkIds.has(id)) {
+      selectedLinkIds.delete(id);
+    } else {
+      selectedLinkIds.add(id);
+    }
+    selectedLinkIds = new Set(selectedLinkIds); // trigger reactivity
+  }
+
   function startEdit(link: Link) {
     editingId = link.id;
     editName = link.name;
@@ -116,6 +141,18 @@
 
   function isUrl(path: string) {
     return path.startsWith('http://') || path.startsWith('https://');
+  }
+
+  async function launchGroup(groupLink: Link) {
+    if (!groupLink.linkIds) return;
+    const linksToLaunch = $linkStore.filter(l => groupLink.linkIds!.includes(l.id) && !l.isGroup);
+
+    // We launch them one by one.
+    for (const link of linksToLaunch) {
+      await openPath(link.path);
+      // Small delay to prevent overwhelming the OS/Browser
+      await new Promise(r => setTimeout(r, 200));
+    }
   }
 
   function getAppButtonLabel(path: string) {
@@ -246,6 +283,9 @@
         <Plus class="w-4 h-4 mr-1" />
         追加
       </Button>
+      <Button variant="secondary" onclick={() => showGroupModal = true} size="sm" class="h-8 px-3" title="グループ追加">
+        <Layers class="w-4 h-4" />
+      </Button>
     </div>
   </div>
 
@@ -320,7 +360,11 @@
                 {#if editingId === link.id}
                   <td class="px-2 py-1"><Input bind:value={editName} class="h-7 text-[10px] w-full" /></td>
                   <td class="px-2 py-1"><Input bind:value={editCategory} class="h-7 text-[10px] w-full" /></td>
-                  <td class="px-2 py-1"><Input bind:value={editPath} class="h-7 text-[10px] w-full" /></td>
+                  <td class="px-2 py-1">
+                    {#if !link.isGroup}
+                      <Input bind:value={editPath} class="h-7 text-[10px] w-full" />
+                    {/if}
+                  </td>
                   <td class="px-3 py-1 text-right space-x-1">
                     <Button variant="outline" size="sm" class="h-7 w-7 p-0" onclick={saveEdit} title="保存">
                       <Check class="w-3.5 h-3.5 text-green-600" />
@@ -332,7 +376,9 @@
                 {:else}
                   <td class="px-3 py-1.5 font-medium truncate">
                     <div class="flex items-center gap-1.5">
-                      {#if isUrl(link.path)}
+                      {#if link.isGroup}
+                        <Layers class="w-3 h-3 text-primary" />
+                      {:else if isUrl(link.path)}
                         <Globe class="w-3 h-3 text-blue-500" />
                       {:else}
                         <File class="w-3 h-3 text-zinc-500" />
@@ -348,8 +394,12 @@
                       {link.category}
                     </span>
                   </td>
-                  <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.path}>
-                    {link.path}
+                  <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.isGroup ? `${link.linkIds?.length || 0} 個のリンク` : link.path}>
+                    {#if link.isGroup}
+                      <div class="flex items-center gap-1"><ListChecks class="w-3 h-3" /> {link.linkIds?.length || 0} 個のリンク</div>
+                    {:else}
+                      {link.path}
+                    {/if}
                   </td>
                   <td class="px-3 py-1.5 text-right space-x-0.5 whitespace-nowrap">
                     <Button variant="ghost" size="icon" class="h-7 w-7 {link.isFavorite ? 'text-yellow-500' : 'text-muted-foreground'}" onclick={() => linkStore.toggleFavorite(link.id)} title={link.isFavorite ? "お気に入り解除" : "お気に入りに追加"}>
@@ -365,30 +415,38 @@
                     <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => startEdit(link)} title="編集">
                       <Edit2 class="w-3.5 h-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
-                      <Copy class="w-3.5 h-3.5" />
-                    </Button>
 
-                    {#if !isUrl(link.path)}
-                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => openTerminal(link.path)} title="ターミナル">
-                        <Terminal class="w-3.5 h-3.5" />
+                    {#if link.isGroup}
+                      <Button variant="default" size="sm" class="h-7 px-3 text-[10px]" onclick={() => launchGroup(link)}>
+                        <Layers class="w-3 h-3 mr-1" />
+                        一括起動
                       </Button>
-                    {/if}
+                    {:else}
+                      <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => copyToClipboard(link.path)} title="コピー">
+                        <Copy class="w-3.5 h-3.5" />
+                      </Button>
 
-                    <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
-                      {#if isUrl(link.path)}
-                        <ExternalLink class="w-3 h-3 mr-1" />
-                      {:else}
-                        <Play class="w-3 h-3 mr-1" />
+                      {#if !isUrl(link.path)}
+                        <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => openTerminal(link.path)} title="ターミナル">
+                          <Terminal class="w-3.5 h-3.5" />
+                        </Button>
                       {/if}
-                      {getAppButtonLabel(link.path)}
-                    </Button>
 
-                    {#if !isUrl(link.path)}
-                      <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => revealInExplorer(link.path)} title="フォルダを開く">
-                        <FolderOpen class="w-3 h-3 mr-1" />
-                        フォルダ
+                      <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
+                        {#if isUrl(link.path)}
+                          <ExternalLink class="w-3 h-3 mr-1" />
+                        {:else}
+                          <Play class="w-3 h-3 mr-1" />
+                        {/if}
+                        {getAppButtonLabel(link.path)}
                       </Button>
+
+                      {#if !isUrl(link.path)}
+                        <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => revealInExplorer(link.path)} title="フォルダを開く">
+                          <FolderOpen class="w-3 h-3 mr-1" />
+                          フォルダ
+                        </Button>
+                      {/if}
                     {/if}
 
                     <Button variant="ghost" size="icon" class="h-7 w-7 text-destructive hover:bg-destructive/10" onclick={() => linkStore.remove(link.id)}>
@@ -469,40 +527,53 @@
 
               <button
                 class="flex-1 text-left py-1"
-                onclick={() => openPath(link.path)}
-                title={link.path}
+                onclick={() => link.isGroup ? launchGroup(link) : openPath(link.path)}
+                title={link.isGroup ? `${link.linkIds?.length || 0} 個のリンク` : link.path}
               >
                 <div class="flex items-center gap-1.5">
-                  {#if isUrl(link.path)}
+                  {#if link.isGroup}
+                    <Layers class="w-3.5 h-3.5 text-primary shrink-0" />
+                  {:else if isUrl(link.path)}
                     <Globe class="w-3.5 h-3.5 text-blue-500 shrink-0" />
                   {:else}
                     <File class="w-3.5 h-3.5 text-zinc-500 shrink-0" />
                   {/if}
                   <div class="font-bold text-sm leading-tight line-clamp-2">{link.name}</div>
                 </div>
+                {#if link.isGroup}
+                   <div class="text-[10px] text-muted-foreground mt-1 text-left">{link.linkIds?.length || 0} 個のリンク</div>
+                {/if}
               </button>
 
               <div class="flex items-center gap-1 pt-2 border-t mt-auto opacity-0 group-hover:opacity-100 transition-opacity flex-wrap">
-                <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => copyToClipboard(link.path)} title="コピー">
-                  <Copy class="w-3 h-3" />
-                </Button>
-                {#if !isUrl(link.path)}
-                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => openTerminal(link.path)} title="ターミナル">
-                    <Terminal class="w-3 h-3" />
+                {#if link.isGroup}
+                  <div class="flex-1"></div>
+                  <Button variant="default" size="sm" class="h-7 px-3 text-[10px] w-full" onclick={() => launchGroup(link)}>
+                    <Layers class="w-3 h-3 mr-1" />
+                    一括起動
                   </Button>
-                {/if}
-                <div class="flex-1"></div>
-                <div class="flex gap-1.5 items-center">
-                  <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px]" onclick={() => openPath(link.path)}>
-                    {getAppButtonLabel(link.path)}
+                {:else}
+                  <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => copyToClipboard(link.path)} title="コピー">
+                    <Copy class="w-3 h-3" />
                   </Button>
                   {#if !isUrl(link.path)}
-                    <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px] bg-primary/5 border-primary/40 font-medium" onclick={() => revealInExplorer(link.path)}>
-                      <FolderOpen class="w-3 h-3 mr-1" />
-                      フォルダ
+                    <Button variant="ghost" size="icon" class="h-6 w-6" onclick={() => openTerminal(link.path)} title="ターミナル">
+                      <Terminal class="w-3 h-3" />
                     </Button>
                   {/if}
-                </div>
+                  <div class="flex-1"></div>
+                  <div class="flex gap-1.5 items-center">
+                    <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px]" onclick={() => openPath(link.path)}>
+                      {getAppButtonLabel(link.path)}
+                    </Button>
+                    {#if !isUrl(link.path)}
+                      <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px] bg-primary/5 border-primary/40 font-medium" onclick={() => revealInExplorer(link.path)}>
+                        <FolderOpen class="w-3 h-3 mr-1" />
+                        フォルダ
+                      </Button>
+                    {/if}
+                  </div>
+                {/if}
               </div>
             </div>
           {:else}
@@ -522,17 +593,71 @@
       isPinned={!!contextMenu.link.isPinned}
       isFavorite={!!contextMenu.link.isFavorite}
       isUrl={isUrl(contextMenu.link.path)}
-      label={getAppButtonLabel(contextMenu.link.path)}
+      isGroup={!!contextMenu.link.isGroup}
+      label={contextMenu.link.isGroup ? '一括起動' : getAppButtonLabel(contextMenu.link.path)}
       onClose={closeContextMenu}
       onEdit={() => startEdit(contextMenu.link!)}
       onDelete={() => linkStore.remove(contextMenu.link!.id)}
-      onOpen={() => openPath(contextMenu.link!.path)}
+      onOpen={() => contextMenu.link!.isGroup ? launchGroup(contextMenu.link!) : openPath(contextMenu.link!.path)}
       onCopy={() => copyToClipboard(contextMenu.link!.path)}
       onPin={() => linkStore.togglePin(contextMenu.link!.id)}
       onFavorite={() => linkStore.toggleFavorite(contextMenu.link!.id)}
       onReveal={() => revealInExplorer(contextMenu.link!.path)}
       onTerminal={() => openTerminal(contextMenu.link!.path)}
     />
+  {/if}
+
+  {#if showGroupModal}
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-card border rounded-lg shadow-lg w-full max-w-xl p-4 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
+        <div class="flex items-center gap-2 mb-4 shrink-0">
+          <Layers class="w-5 h-5 text-primary" />
+          <h3 class="font-bold">グループの作成</h3>
+        </div>
+
+        <div class="space-y-3 mb-4 shrink-0">
+          <div class="flex gap-3">
+            <div class="flex-[2] space-y-1">
+              <label for="group-name" class="text-xs text-muted-foreground">グループ名 <span class="text-destructive">*</span></label>
+              <Input id="group-name" bind:value={groupName} class="h-8" placeholder="朝のルーティン 等" />
+            </div>
+            <div class="flex-[1] space-y-1">
+              <label for="group-cat" class="text-xs text-muted-foreground">カテゴリー</label>
+              <Input id="group-cat" bind:value={groupCategory} class="h-8" placeholder="任意" />
+            </div>
+          </div>
+        </div>
+
+        <div class="text-xs text-muted-foreground mb-2 shrink-0 flex justify-between items-end">
+          <span>起動するリンクを選択:</span>
+          <span class="font-medium {selectedLinkIds.size === 0 ? 'text-destructive' : 'text-primary'}">{selectedLinkIds.size} 件選択中</span>
+        </div>
+
+        <div class="flex-1 overflow-y-auto border rounded-md p-2 space-y-1 bg-muted/30">
+          {#each $linkStore.filter(l => !l.isGroup) as link (link.id)}
+            <label class="flex items-center gap-3 p-2 hover:bg-background rounded border border-transparent hover:border-border cursor-pointer transition-colors {selectedLinkIds.has(link.id) ? 'bg-background border-primary/50 shadow-sm' : ''}">
+              <input
+                type="checkbox"
+                class="rounded border-input text-primary focus:ring-primary h-4 w-4"
+                checked={selectedLinkIds.has(link.id)}
+                onchange={() => toggleLinkSelection(link.id)}
+              />
+              <div class="flex flex-col overflow-hidden">
+                <span class="text-sm font-medium truncate">{link.name}</span>
+                <span class="text-[10px] text-muted-foreground truncate">{link.path}</span>
+              </div>
+            </label>
+          {:else}
+             <div class="p-4 text-center text-xs text-muted-foreground">登録されているリンクがありません</div>
+          {/each}
+        </div>
+
+        <div class="flex justify-end gap-2 pt-4 shrink-0">
+          <Button variant="outline" size="sm" onclick={() => showGroupModal = false}>キャンセル</Button>
+          <Button size="sm" onclick={addGroup} disabled={!groupName || selectedLinkIds.size === 0}>作成</Button>
+        </div>
+      </div>
+    </div>
   {/if}
 
   {#if editingId && $settingsStore.viewMode === 'grid'}
@@ -548,10 +673,12 @@
             <label for="edit-cat" class="text-[10px] text-muted-foreground">カテゴリー</label>
             <Input id="edit-cat" bind:value={editCategory} class="h-8 text-sm" />
           </div>
-          <div class="space-y-1">
-            <label for="edit-path" class="text-[10px] text-muted-foreground">URL / パス</label>
-            <Input id="edit-path" bind:value={editPath} class="h-8 text-sm" />
-          </div>
+          {#if !($linkStore.find(l => l.id === editingId)?.isGroup)}
+            <div class="space-y-1">
+              <label for="edit-path" class="text-[10px] text-muted-foreground">URL / パス</label>
+              <Input id="edit-path" bind:value={editPath} class="h-8 text-sm" />
+            </div>
+          {/if}
         </div>
         <div class="flex justify-end gap-2 pt-2">
           <Button variant="outline" size="sm" onclick={cancelEdit}>キャンセル</Button>

@@ -8,6 +8,7 @@
     isPinned: boolean;
     isFavorite: boolean;
     isUrl: boolean;
+    isGroup?: boolean;
     label: string;
     onClose: () => void;
     onEdit: () => void;
@@ -21,7 +22,7 @@
   }
 
   let {
-    x, y, isPinned, isFavorite, isUrl, label,
+    x, y, isPinned, isFavorite, isUrl, isGroup = false, label,
     onClose, onEdit, onDelete, onOpen, onCopy, onPin, onFavorite, onReveal, onTerminal
   }: Props = $props();
 
@@ -86,13 +87,15 @@
     {label}
   </button>
 
-  <button
-    class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
-    onclick={() => handleAction(onCopy)}
-  >
-    <Copy class="w-3.5 h-3.5" />
-    パスをコピー
-  </button>
+  {#if !isGroup}
+    <button
+      class="w-full px-3 py-1.5 text-left text-xs flex items-center gap-2 hover:bg-muted transition-colors"
+      onclick={() => handleAction(onCopy)}
+    >
+      <Copy class="w-3.5 h-3.5" />
+      パスをコピー
+    </button>
+  {/if}
 
   <div class="h-px bg-border my-1"></div>
 
@@ -117,7 +120,7 @@
     {isFavorite ? 'お気に入り解除' : 'お気に入りに追加'}
   </button>
 
-  {#if !isUrl}
+  {#if !isUrl && !isGroup}
     <div class="h-px bg-border my-1"></div>
 
     <button
