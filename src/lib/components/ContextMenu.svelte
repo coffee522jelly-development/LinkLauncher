@@ -128,7 +128,7 @@
       onclick={() => handleAction(onReveal!)}
     >
       <FolderOpen class="w-3.5 h-3.5" />
-      フォルダを開く
+      フォルダ内を表示
     </button>
 
     <button
