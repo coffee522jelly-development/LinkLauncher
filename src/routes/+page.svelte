@@ -6,7 +6,7 @@
   import Button from '$lib/components/Button.svelte';
   import Input from '$lib/components/Input.svelte';
   import ContextMenu from '$lib/components/ContextMenu.svelte';
-  import { Search, Plus, Trash2, Copy, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff, Star, Layers, ListChecks } from 'lucide-svelte';
+  import { Search, Plus, Trash2, Copy, Folder, FolderOpen, ExternalLink, Play, Settings, Download, Upload, Edit2, Check, X, LayoutList, LayoutGrid, ArrowUpDown, Terminal, Globe, File, Pin, PinOff, Star, Layers, ListChecks } from 'lucide-svelte';
 
   let newName = $state('');
   let newPath = $state('');
@@ -435,6 +435,8 @@
                       <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => openPath(link.path)}>
                         {#if isUrl(link.path)}
                           <ExternalLink class="w-3 h-3 mr-1" />
+                        {:else if getAppButtonLabel(link.path) === 'フォルダ'}
+                          <Folder class="w-3 h-3 mr-1" />
                         {:else}
                           <Play class="w-3 h-3 mr-1" />
                         {/if}
@@ -442,9 +444,9 @@
                       </Button>
 
                       {#if !isUrl(link.path)}
-                        <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => revealInExplorer(link.path)} title="フォルダを開く">
+                        <Button variant="outline" size="sm" class="h-7 px-2 text-[10px]" onclick={() => revealInExplorer(link.path)} title="フォルダ内を表示">
                           <FolderOpen class="w-3 h-3 mr-1" />
-                          フォルダ
+                          フォルダ内
                         </Button>
                       {/if}
                     {/if}
@@ -564,12 +566,17 @@
                   <div class="flex-1"></div>
                   <div class="flex gap-1.5 items-center">
                     <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px]" onclick={() => openPath(link.path)}>
+                      {#if isUrl(link.path)}
+                        <ExternalLink class="w-3 h-3 mr-1" />
+                      {:else if getAppButtonLabel(link.path) === 'フォルダ'}
+                        <Folder class="w-3 h-3 mr-1" />
+                      {/if}
                       {getAppButtonLabel(link.path)}
                     </Button>
                     {#if !isUrl(link.path)}
-                      <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px] bg-primary/5 border-primary/40 font-medium" onclick={() => revealInExplorer(link.path)}>
+                      <Button variant="outline" size="sm" class="h-7 px-2.5 text-[10px] bg-primary/5 border-primary/40 font-medium" onclick={() => revealInExplorer(link.path)} title="フォルダ内を表示">
                         <FolderOpen class="w-3 h-3 mr-1" />
-                        フォルダ
+                        フォルダ内
                       </Button>
                     {/if}
                   </div>
