@@ -24,6 +24,8 @@
 
   // Group Modal state
   let showGroupModal = $state(false);
+  let editingGroupId = $state<string | null>(null);
+  let viewingGroupLink = $state<Link | null>(null);
   let groupName = $state('');
   let groupCategory = $state('');
   let selectedLinkIds = $state<Set<string>>(new Set());
@@ -89,9 +91,26 @@
     }
   }
 
-  async function addGroup() {
+  function openGroupModalForCreate() {
+    editingGroupId = null;
+    groupName = '';
+    groupCategory = '';
+    selectedLinkIds.clear();
+    showGroupModal = true;
+  }
+
+  async function saveGroup() {
     if (groupName && selectedLinkIds.size > 0) {
-      await linkStore.addGroup(groupName, groupCategory, Array.from(selectedLinkIds));
+      if (editingGroupId) {
+        await linkStore.update(editingGroupId, {
+          name: groupName,
+          category: groupCategory,
+          linkIds: Array.from(selectedLinkIds)
+        });
+        editingGroupId = null;
+      } else {
+        await linkStore.addGroup(groupName, groupCategory, Array.from(selectedLinkIds));
+      }
       groupName = '';
       groupCategory = '';
       selectedLinkIds.clear();
@@ -109,10 +128,18 @@
   }
 
   function startEdit(link: Link) {
-    editingId = link.id;
-    editName = link.name;
-    editCategory = link.category;
-    editPath = link.path;
+    if (link.isGroup) {
+      editingGroupId = link.id;
+      groupName = link.name;
+      groupCategory = link.category;
+      selectedLinkIds = new Set(link.linkIds || []);
+      showGroupModal = true;
+    } else {
+      editingId = link.id;
+      editName = link.name;
+      editCategory = link.category;
+      editPath = link.path;
+    }
   }
 
   function cancelEdit() {
@@ -283,7 +310,7 @@
         <Plus class="w-4 h-4 mr-1" />
         追加
       </Button>
-      <Button variant="secondary" onclick={() => showGroupModal = true} size="sm" class="h-8 px-3" title="グループ追加">
+      <Button variant="secondary" onclick={openGroupModalForCreate} size="sm" class="h-8 px-3" title="グループ追加">
         <Layers class="w-4 h-4" />
       </Button>
     </div>
@@ -396,7 +423,14 @@
                   </td>
                   <td class="px-3 py-1.5 text-muted-foreground truncate" title={link.isGroup ? `${link.linkIds?.length || 0} 個のリンク` : link.path}>
                     {#if link.isGroup}
-                      <div class="flex items-center gap-1"><ListChecks class="w-3 h-3" /> {link.linkIds?.length || 0} 個のリンク</div>
+                      <button
+                        class="flex items-center gap-1 text-primary hover:underline cursor-pointer font-medium text-left"
+                        onclick={() => viewingGroupLink = link}
+                        title="グループ内のリンク一覧を表示"
+                      >
+                        <ListChecks class="w-3.5 h-3.5" />
+                        {link.linkIds?.length || 0} 個のリンク
+                      </button>
                     {:else}
                       {link.path}
                     {/if}
@@ -543,7 +577,15 @@
                   <div class="font-bold text-sm leading-tight line-clamp-2">{link.name}</div>
                 </div>
                 {#if link.isGroup}
-                   <div class="text-[10px] text-muted-foreground mt-1 text-left">{link.linkIds?.length || 0} 個のリンク</div>
+                   <button
+                     type="button"
+                     class="text-[10px] text-primary hover:underline mt-1 text-left flex items-center gap-1"
+                     onclick={(e) => { e.stopPropagation(); viewingGroupLink = link; }}
+                     title="グループ内のリンク一覧を表示"
+                   >
+                     <ListChecks class="w-3 h-3" />
+                     {link.linkIds?.length || 0} 個のリンク
+                   </button>
                 {/if}
               </button>
 
@@ -619,7 +661,7 @@
       <div class="bg-card border rounded-lg shadow-lg w-full max-w-xl p-4 flex flex-col max-h-[90vh] animate-in fade-in zoom-in-95">
         <div class="flex items-center gap-2 mb-4 shrink-0">
           <Layers class="w-5 h-5 text-primary" />
-          <h3 class="font-bold">グループの作成</h3>
+          <h3 class="font-bold">{editingGroupId ? 'グループの編集' : 'グループの作成'}</h3>
         </div>
 
         <div class="space-y-3 mb-4 shrink-0">
@@ -641,7 +683,7 @@
         </div>
 
         <div class="flex-1 overflow-y-auto border rounded-md p-2 space-y-1 bg-muted/30">
-          {#each $linkStore.filter(l => !l.isGroup) as link (link.id)}
+          {#each $linkStore.filter(l => !l.isGroup && l.id !== editingGroupId) as link (link.id)}
             <label class="flex items-center gap-3 p-2 hover:bg-background rounded border border-transparent hover:border-border cursor-pointer transition-colors {selectedLinkIds.has(link.id) ? 'bg-background border-primary/50 shadow-sm' : ''}">
               <input
                 type="checkbox"
@@ -661,7 +703,70 @@
 
         <div class="flex justify-end gap-2 pt-4 shrink-0">
           <Button variant="outline" size="sm" onclick={() => showGroupModal = false}>キャンセル</Button>
-          <Button size="sm" onclick={addGroup} disabled={!groupName || selectedLinkIds.size === 0}>作成</Button>
+          <Button size="sm" onclick={saveGroup} disabled={!groupName || selectedLinkIds.size === 0}>
+            {editingGroupId ? '保存' : '作成'}
+          </Button>
+        </div>
+      </div>
+    </div>
+  {/if}
+
+  {#if viewingGroupLink}
+    <div class="fixed inset-0 bg-background/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div class="bg-card border rounded-lg shadow-lg w-full max-w-lg p-4 flex flex-col max-h-[80vh] animate-in fade-in zoom-in-95">
+        <div class="flex items-center justify-between mb-3 shrink-0 border-b pb-2">
+          <div class="flex items-center gap-2">
+            <Layers class="w-5 h-5 text-primary" />
+            <div>
+              <h3 class="font-bold text-sm">{viewingGroupLink.name}</h3>
+              <span class="text-[10px] text-muted-foreground">{viewingGroupLink.category || 'カテゴリなし'} • {viewingGroupLink.linkIds?.length || 0} 件のリンク</span>
+            </div>
+          </div>
+          <Button variant="ghost" size="icon" class="h-7 w-7" onclick={() => viewingGroupLink = null}>
+            <X class="w-4 h-4" />
+          </Button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-2 py-1 pr-1">
+          {#each ($linkStore.filter(l => viewingGroupLink?.linkIds?.includes(l.id))) as item (item.id)}
+            <div class="p-2.5 rounded-md border bg-muted/20 flex items-center justify-between gap-2">
+              <div class="flex flex-col min-w-0 flex-1">
+                <div class="flex items-center gap-1.5 font-medium text-xs">
+                  {#if isUrl(item.path)}
+                    <Globe class="w-3 h-3 text-blue-500 shrink-0" />
+                  {:else}
+                    <File class="w-3 h-3 text-zinc-500 shrink-0" />
+                  {/if}
+                  <span class="truncate">{item.name}</span>
+                  {#if item.category}
+                    <span class="text-[9px] px-1.5 py-0.5 rounded bg-primary/10 text-primary font-normal">{item.category}</span>
+                  {/if}
+                </div>
+                <span class="text-[10px] text-muted-foreground truncate mt-0.5">{item.path}</span>
+              </div>
+              <Button variant="outline" size="sm" class="h-7 px-2 text-[10px] shrink-0" onclick={() => openPath(item.path)}>
+                {#if isUrl(item.path)}
+                  <ExternalLink class="w-3 h-3 mr-1" />
+                {:else}
+                  <Play class="w-3 h-3 mr-1" />
+                {/if}
+                起動
+              </Button>
+            </div>
+          {:else}
+            <div class="p-6 text-center text-xs text-muted-foreground">含まれるリンクが見つかりません</div>
+          {/each}
+        </div>
+
+        <div class="flex justify-between items-center pt-3 border-t mt-2 shrink-0">
+          <Button variant="outline" size="sm" onclick={() => { const g = viewingGroupLink; viewingGroupLink = null; startEdit(g!); }}>
+            <Edit2 class="w-3.5 h-3.5 mr-1" />
+            グループ編集
+          </Button>
+          <Button variant="default" size="sm" onclick={() => { launchGroup(viewingGroupLink!); viewingGroupLink = null; }}>
+            <Layers class="w-3 h-3 mr-1" />
+            一括起動
+          </Button>
         </div>
       </div>
     </div>
